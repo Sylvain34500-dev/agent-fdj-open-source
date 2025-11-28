@@ -1,0 +1,9 @@
+[
+  { "event_id": "20251128-1", "market": "MatchResult", "runner": "TeamA", "odds": 6.5 },
+  { "event_id": "20251128-1", "market": "MatchResult", "runner": "Draw", "odds": 4.2 },
+  { "event_id": "20251128-1", "market": "MatchResult", "runner": "TeamB", "odds": 1.8 },
+
+  { "event_id": "20251128-2", "market": "MatchResult", "runner": "TeamC", "odds": 5.5 },
+  { "event_id": "20251128-2", "market": "MatchResult", "runner": "Draw", "odds": 4.8 },
+  { "event_id": "20251128-2", "market": "MatchResult", "runner": "TeamD", "odds": 1.9 }
+]
