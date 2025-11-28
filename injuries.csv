@@ -1,4 +1,23 @@
-equipe,joueur,status
-PSG,Marquinhos,blesse
-Manchester City,De Bruyne,incertain
-Real Madrid,Alaba,blesse
+sport,equipe,joueur,poste,statut,importance
+football,PSG,Kylian Mbappé,AT,blesse,critique
+football,PSG,Marquinhos,DC,blesse,haute
+football,Real Madrid,Bellingham,MOC,incertain,critique
+basket,Lakers,LeBron James,AIL,incertain,critique
+basket,Lakers,Anthony Davis,PIV,blesse,haute
+basket,Warriors,Stephen Curry,AR,incertain,critique
+tennis,Rafael Nadal,,simple,blesse,critique
+tennis,Novak Djokovic,,simple,incertain,haute
+rugby,Toulouse,Antoine Dupont,MDM,incertain,critique
+rugby,All Blacks,Beauden Barrett,OUV,blesse,haute
+hockey_sur_glace,Canadiens,Cole Caufield,AT,blesse,haute
+hockey_sur_glace,Bruins,Brad Marchand,AT,incertain,moyenne
+handball,PSG,Nedim Remili,AR,blesse,haute
+volleyball,France,Stephen Boyer,AT,blesse,haute
+ufc,Fighter X,,forfait,critique
+ufc,Fighter Y,,incertain,haute
+nfl,Chiefs,Patrick Mahomes,QB,incertain,critique
+nfl,49ers,Christian McCaffrey,RB,blesse,haute
+formule_1,Ferrari,Charles Leclerc,pilote,incertain,moyenne
+moto_gp,Yamaha,Fabio Quartararo,pilote,blesse,haute
+esport,Team Vitality,Player1,rifler,blesse,moyenne
+esport,Fnatic,Player2,igl,incertain,critique
