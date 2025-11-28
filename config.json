@@ -3,35 +3,37 @@
     "football",
     "basket",
     "tennis",
-    "hockey",
-    "handball",
-    "volley",
     "rugby",
+    "handball",
+    "volleyball",
+    "hockey_sur_glace",
+    "baseball",
+    "boxe",
     "ufc",
-    "baseball"
-  ],
-  "poids": {
-    "forme": 0.25,
-    "blessures": 0.25,
-    "stats_joueurs": 0.20,
-    "historique": 0.15,
-    "cotes": 0.10,
-    "contexte": 0.05
-  },
-  "importance_joueurs": {
-    "titulaire": 1.0,
-    "remplaçant": 0.45,
-    "superstar": 1.3,
-    "role_player": 0.7
-  },
-  "seuils": {
-    "confiance_min": 0.67,
-    "confiance_safe": 0.74,
-    "value_bet": 1.08
-  },
-  "filtres": {
-    "ignorer_matchs_avec_trop_d_incertain": true,
-    "max_incertain_autorises": 2,
-    "min_joueurs_absents_alerte": 3
-  }
+    "mma",
+    "formule_1",
+    "moto_gp",
+    "cyclisme",
+    "athletisme",
+    "natation",
+    "biathlon",
+    "ski_alpin",
+    "ski_de_fond",
+    "snooker",
+    "tennis_de_table",
+    "badminton",
+    "cricket",
+    "water_polo",
+    "football_americain",
+    "nfl",
+    "australian_rules",
+    "esport",
+    "csgo",
+    "league_of_legends",
+    "dota2",
+    "valorant",
+    "rocket_league",
+    "golf"
+  ]
 }
+
