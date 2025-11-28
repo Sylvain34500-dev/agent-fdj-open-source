@@ -1,0 +1,10 @@
+{
+  "sport": "football",
+  "historique_jours": 180,
+  "poids_forme": 0.35,
+  "poids_blessures": 0.25,
+  "poids_historique": 0.25,
+  "poids_cotes": 0.15,
+  "niveau_risque": "faible",
+  "seuil_confiance": 0.72
+}
