@@ -1,0 +1,11 @@
+{
+  "name": "agent-fdj",
+  "version": "0.1.0",
+  "description": "Agent FDJ open-source - compute value bets and generate picks.json",
+  "main": "index.js",
+  "scripts": {
+    "build": "node index.js"
+  },
+  "author": "TonPseudo",
+  "license": "MIT"
+}
