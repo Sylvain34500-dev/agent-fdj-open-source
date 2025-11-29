@@ -1,26 +1,34 @@
-name: Build app
+name: Auto Update Predictions
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  schedule:
+    - cron: "0 20 * * *"  # tous les jours à 20h
+  workflow_dispatch:
 
 jobs:
-  build:
+  update:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: '18'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build app
-        run: npm run build
+      - name: Run prediction script
+        run: node fetch_and_score.js
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Auto-update predictions $(date '+%Y-%m-%d %H:%M')" || echo "No changes to commit"
+          git push
+
