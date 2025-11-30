@@ -1,0 +1,58 @@
+const fs = require('fs');
+const odds = JSON.parse(fs.readFileSync('odds_fdj.json', 'utf8'));
+const players = fs.readFileSync('players_stats.csv', 'utf8');
+const injuries = fs.readFileSync('injuries.csv', 'utf8');
+
+// Helper to determine match safety
+function scoreMatch(match) {
+    let score = 0;
+
+    if (match.probHome > 0.60 || match.probAway > 0.60) score += 2;
+    if (match.formRating > 0.6) score += 1;
+    if (match.injuryImpact < 0.15) score += 1;
+    if (match.odds < 1.55) score += 1;
+
+    return score;
+}
+
+let matches = odds.map(m => ({
+    team1: m.home,
+    team2: m.away,
+    odds: m.best_odds,
+    probHome: m.prob_home,
+    probAway: m.prob_away,
+    formRating: m.form_rating,
+    injuryImpact: m.injury_impact
+}));
+
+// --- 5 PARIS SIMPLES ---
+const simpleBets = matches
+    .map(m => ({ ...m, score: scoreMatch(m) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+
+// --- 2 COMBINES SÛRS ---
+const safeMatches = matches
+    .filter(m => scoreMatch(m) >= 3 && m.odds <= 1.60)
+    .sort((a, b) => a.odds - b.odds)
+    .slice(0, 4);
+
+const combo1 = safeMatches.slice(0, 2);
+const combo2 = safeMatches.slice(2, 4);
+
+// --- OUTPUT ---
+let report = "🎯 *Paris du jour*\n\n";
+
+// Paris simples
+report += "🔥 *5 Paris Simples Fiables :*\n";
+simpleBets.forEach(m => {
+    report += `• ${m.team1} vs ${m.team2} — cote ${m.odds}\n`;
+});
+report += "\n";
+
+// Combis sûrs
+report += "🛡️ *Combinés Sécurisés :*\n\n";
+report += `1️⃣ ${combo1.map(m => m.team1 + " vs " + m.team2).join(" + ")}\n`;
+report += `2️⃣ ${combo2.map(m => m.team1 + " vs " + m.team2).join(" + ")}\n`;
+
+fs.writeFileSync("daily_bets.txt", report);
