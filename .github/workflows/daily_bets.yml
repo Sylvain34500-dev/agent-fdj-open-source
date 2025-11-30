@@ -1,0 +1,31 @@
+name: Daily Bets
+
+on:
+  schedule:
+    - cron: "0 9 * * *"   # Exécution tous les jours à 09h00 UTC (10h00 FR)
+  workflow_dispatch:       # Permet de lancer manuellement
+
+jobs:
+  daily_betting_tips:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install deps
+        run: npm install
+
+      - name: Run daily bets generator
+        run: node daily_bets.js
+
+      - name: Send results to Telegram
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+          -d text="$(cat daily_bets.txt)"
