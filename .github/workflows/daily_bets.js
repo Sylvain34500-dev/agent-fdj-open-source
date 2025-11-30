@@ -1,57 +1,103 @@
 const fs = require("fs");
 
 // ------------------------------
-// GENERATE 5 SINGLE BETS
+// LOAD DATA
 // ------------------------------
+const odds = JSON.parse(fs.readFileSync("odds_fdj.json", "utf8"));
+const playersStats = fs.readFileSync("players_stats.csv", "utf8");
+const injuriesData = fs.readFileSync("injuries.csv", "utf8");
 
-function generateSingleBets() {
-    const bets = [];
+// ------------------------------
+// PARSER INJURIES
+// ------------------------------
+function loadInjuries() {
+    let lines = injuriesData.split("\n").slice(1);
+    const injuryMap = {};
 
-    for (let i = 1; i <= 5; i++) {
-        bets.push(`🎯 Pari simple ${i} : Équipe A vs Équipe B — Cote ${(1.4 + Math.random() * 1.2).toFixed(2)}`);
-    }
+    lines.forEach(line => {
+        const [team, player, impact] = line.split(",");
+        if (!team) return;
 
-    return bets;
+        if (!injuryMap[team]) injuryMap[team] = 0;
+        injuryMap[team] += parseFloat(impact || 0);
+    });
+
+    return injuryMap;
+}
+
+const injuryMap = loadInjuries();
+
+// ------------------------------
+// SCORE CALCULATION
+// ------------------------------
+function scoreMatch(match) {
+    let score = 0;
+
+    // Probabilités FDJ
+    if (match.prob_home > 0.60 || match.prob_away > 0.60) score += 2;
+
+    // Forme
+    if (match.form_rating > 0.60) score += 1;
+
+    // Blessures
+    const teamInjury = injuryMap[match.home] || 0;
+    if (teamInjury < 0.15) score += 1;
+
+    // Cote
+    if (match.best_odds <= 1.55) score += 1;
+
+    return score;
 }
 
 // ------------------------------
-// GENERATE 2 SAFE COMBINATIONS
+// MATCH OBJECTS
 // ------------------------------
-
-function generateCombinations() {
-    const combos = [];
-
-    for (let i = 1; i <= 2; i++) {
-        combos.push(
-            `🧩 Combinaison sûre ${i} :\n` +
-            `  - Match 1 : ${(1.20 + Math.random() * 0.20).toFixed(2)}\n` +
-            `  - Match 2 : ${(1.20 + Math.random() * 0.20).toFixed(2)}\n` +
-            `  - Cote totale : ${(1.4 + Math.random() * 0.4).toFixed(2)}`
-        );
-    }
-
-    return combos;
-}
+let matches = odds.map(m => ({
+    home: m.home,
+    away: m.away,
+    best_odds: m.best_odds,
+    prob_home: m.prob_home,
+    prob_away: m.prob_away,
+    form_rating: m.form_rating,
+    injury: injuryMap[m.home] || 0,
+    score: 0
+}));
 
 // ------------------------------
-// FORMAT FINAL
+// TOP 5 SINGLE BETS
 // ------------------------------
+matches.forEach(m => m.score = scoreMatch(m));
 
-const singleBets = generateSingleBets();
-const combos = generateCombinations();
+const simpleBets = matches
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
 
-let output = "🔥 **Prédictions du jour** 🔥\n\n";
+// ------------------------------
+// SAFE COMBINATIONS
+// ------------------------------
+const safeMatches = matches
+    .filter(m => m.score >= 3 && m.best_odds <= 1.65)
+    .sort((a, b) => a.best_odds - b.best_odds)
+    .slice(0, 4);
 
-output += "🎯 *PARIS SIMPLES*\n";
-singleBets.forEach(bet => {
-    output += "• " + bet + "\n";
+const combo1 = safeMatches.slice(0, 2);
+const combo2 = safeMatches.slice(2, 4);
+
+// ------------------------------
+// BUILD REPORT
+// ------------------------------
+let report = "🔥 **Prédictions du jour — Modèle FDJ** 🔥\n\n";
+
+report += "🎯 *5 Paris Simples Fiables :*\n";
+simpleBets.forEach(m => {
+    report += `• ${m.home} vs ${m.away} — cote ${m.best_odds}\n`;
 });
+report += "\n";
 
-output += "\n🧩 *COMBINAISONS SÛRES*\n";
-combos.forEach(combo => {
-    output += combo + "\n\n";
-});
+report += "🛡️ *Combinés Sécurisés :*\n\n";
+report += `1️⃣ ${combo1.map(m => m.home + " vs " + m.away).join(" + ")}\n`;
+report += `2️⃣ ${combo2.map(m => m.home + " vs " + m.away).join(" + ")}\n`;
 
-fs.writeFileSync("daily_bets.txt", output, "utf8");
+fs.writeFileSync("daily_bets.txt", report, "utf8");
 
-console.log("daily_bets.txt généré avec succès !");
+console.log("✔ Rapport FDJ généré !");
