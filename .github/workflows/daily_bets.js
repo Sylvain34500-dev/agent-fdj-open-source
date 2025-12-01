@@ -131,3 +131,34 @@ report += `2️⃣ ${combo2
 
 fs.writeFileSync("daily_bets.txt", report, "utf8");
 console.log("✔ Rapport FDJ+ généré !");
+// === Imports ===
+// … ton code …
+
+// === AJOUT : Fonction de niveau de confiance ===
+function computeConfidence(stats) {
+    const {
+        forme, h2h, domicile, blessures,
+        attaque, defense, variance
+    } = stats;
+
+    let score =
+          forme * 0.25
+        + h2h * 0.15
+        + domicile * 0.10
+        + (100 - blessures) * 0.20
+        + attaque * 0.10
+        + defense * 0.10
+        + (100 - variance) * 0.10;
+
+    score = Math.max(0, Math.min(100, score));
+
+    let label =
+        score < 50 ? "🔴 Risqué" :
+        score < 70 ? "🟠 Méfiance" :
+        score < 85 ? "🟡 Solide" :
+        score < 95 ? "🟢 Fort" :
+        "🟣 Ultra Confiance";
+
+    return { score, label };
+}
+
