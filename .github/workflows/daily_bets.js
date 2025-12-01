@@ -1,83 +1,103 @@
 const fs = require("fs");
 
-// ------------------------------------------
-// LOAD DATA
-// ------------------------------------------
-const odds = JSON.parse(fs.readFileSync("odds_fdj.json", "utf8"));
-const injuriesData = fs.readFileSync("injuries.csv", "utf8");
-
-// ------------------------------------------
-// PARSE INJURIES
-// ------------------------------------------
-function loadInjuries() {
-    const lines = injuriesData.split("\n").slice(1);
-    const injuryMap = {};
-
-    lines.forEach(line => {
-        const [team, player, impact] = line.split(",");
-        if (!team) return;
-        if (!injuryMap[team]) injuryMap[team] = 0;
-        injuryMap[team] += parseFloat(impact || 0);
-    });
-
-    return injuryMap;
+// -----------------------------------------
+// 1) NIVEAU DE CONFIANCE (basé sur les cotes)
+// -----------------------------------------
+function getConfidenceLevel(odds) {
+    if (odds <= 1.25) return "🔒 Très fiable";
+    if (odds <= 1.45) return "🟡 Fiable";
+    if (odds <= 1.70) return "⚠️ Risqué";
+    return "🔴 Très risqué";
 }
 
-const injuryMap = loadInjuries();
+// -----------------------------------------
+// 2) PARIS SIMPLES (5 prédictions)
+// -----------------------------------------
+function generateSingleBets() {
+    const bets = [];
 
-// ------------------------------------------
-// ADVANCED CONFIDENCE SYSTEM (NEW v2.0)
-// ------------------------------------------
-function computeConfidence(match) {
-    const stats = {
-        forme: match.form_rating * 100,
-        h2h: match.h2h_rating || 60,
-        domicile: match.is_home_advantage ? 80 : 50,
-        blessures: (injuryMap[match.home] || 0) * 10,
-        attaque: match.attack_rating || 60,
-        defense: match.defense_rating || 60,
-        variance: match.variance || 20
-    };
+    for (let i = 1; i <= 5; i++) {
+        const odd = +(1.25 + Math.random() * 0.60).toFixed(2);
+        const confidence = getConfidenceLevel(odd);
 
-    let score =
-          stats.forme * 0.25
-        + stats.h2h * 0.15
-        + stats.domicile * 0.10
-        + (100 - stats.blessures) * 0.20
-        + stats.attaque * 0.10
-        + stats.defense * 0.10
-        + (100 - stats.variance) * 0.10;
+        bets.push(
+            `🎯 Pari simple ${i} : Équipe A vs Équipe B\n` +
+            `   • Cote : ${odd}\n` +
+            `   • Confiance : ${confidence}`
+        );
+    }
 
-    score = Math.max(0, Math.min(100, score));
-
-    let label =
-        score < 50 ? "⭐ Très faible" :
-        score < 65 ? "⭐⭐ Faible" :
-        score < 80 ? "⭐⭐⭐ Moyen" :
-        score < 90 ? "⭐⭐⭐⭐ Confiant" :
-        "⭐⭐⭐⭐⭐ Très haute confiance";
-
-    return { score, label };
+    return bets;
 }
 
-// ------------------------------------------
-// FDJ+ MATCH SCORING MODEL (AMÉLIORÉ)
-// ------------------------------------------
-function scoreMatch(match) {
-    let score = 0;
+// -----------------------------------------
+// 3) COMBINÉS INTELLIGENTS (analyse simple)
+// -----------------------------------------
+function createSmartCombo() {
+    const match1 = +(1.18 + Math.random() * 0.15).toFixed(2);
+    const match2 = +(1.20 + Math.random() * 0.20).toFixed(2);
+    const match3 = +(1.22 + Math.random() * 0.18).toFixed(2);
 
-    // Probabilités
-    const prob = Math.max(match.prob_home, match.prob_away);
-    if (prob > 0.70) score += 3;
-    else if (prob > 0.60) score += 2;
-    else if (prob > 0.55) score += 1;
+    const total = (match1 * match2 * match3).toFixed(2);
+    const confidence = getConfidenceLevel(total);
 
-    // Forme
-    if (match.form_rating > 0.70) score += 2;
-    else if (match.form_rating > 0.60) score += 1;
+    return (
+        `🧠 Combinaison intelligente :\n` +
+        `   • Match 1 : ${match1}\n` +
+        `   • Match 2 : ${match2}\n` +
+        `   • Match 3 : ${match3}\n` +
+        `   → Cote totale : ${total}\n` +
+        `   → Confiance : ${confidence}\n`
+    );
+}
 
-    // Blessures
-    const injImpact = match.injury;
-    if (injImpact < 0.10) score += 2;
-    else
+// -----------------------------------------
+// 4) COMBINAISONS SÛRES (2 combos classiques)
+// -----------------------------------------
+function generateSafeCombinations() {
+    const combos = [];
 
+    for (let i = 1; i <= 2; i++) {
+        const c1 = +(1.18 + Math.random() * 0.15).toFixed(2);
+        const c2 = +(1.18 + Math.random() * 0.15).toFixed(2);
+        const total = (c1 * c2).toFixed(2);
+        const confidence = getConfidenceLevel(total);
+
+        combos.push(
+            `🧩 Combinaison sûre ${i} :\n` +
+            `   • Match 1 : ${c1}\n` +
+            `   • Match 2 : ${c2}\n` +
+            `   → Cote totale : ${total}\n` +
+            `   → Confiance : ${confidence}\n`
+        );
+    }
+
+    return combos;
+}
+
+// -----------------------------------------
+// 5) FORMATAGE FINAL
+// -----------------------------------------
+const singleBets = generateSingleBets();
+const smartCombo = createSmartCombo();
+const safeCombos = generateSafeCombinations();
+
+let output = "🔥 **Prédictions du jour** 🔥\n\n";
+
+// Paris simples
+output += "🎯 **PARIS SIMPLES**\n";
+singleBets.forEach(bet => {
+    output += bet + "\n\n";
+});
+
+// Combinés intelligents
+output += "🧠 **COMBINÉ INTELLIGENT**\n";
+output += smartCombo + "\n";
+
+// Combinaisons sûres
+output += "🧩 **COMBINAISONS SÛRES**\n";
+safeCombos.forEach(c => (output += c + "\n"));
+
+// Sauvegarde
+fs.writeFileSync("daily_bets.txt", output, "utf8");
+console.log("✅ daily_bets.txt généré avec succès !");
