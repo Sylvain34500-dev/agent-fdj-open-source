@@ -1,10 +1,14 @@
 {
+  "id": "fdj-max-cotes",
   "name": "FDJ Max Cotes",
   "short_name": "MaxCotes",
+  "description": "Analyse automatique des meilleures cotes FDJ avec paris simples et combinés sécurisés.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0d6efd",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -15,6 +19,12 @@
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/maskable-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
