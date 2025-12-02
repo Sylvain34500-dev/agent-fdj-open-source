@@ -2,8 +2,8 @@ name: Daily Bets
 
 on:
   schedule:
-    - cron: "0 8 * * *"
-  workflow_dispatch:
+    - cron: "0 8 * * *"     # Tous les jours à 08:00 UTC (modifiable)
+  workflow_dispatch:         # Permet de lancer manuellement depuis l'onglet Actions
 
 jobs:
   run-daily-bets:
@@ -18,8 +18,16 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm install
-
       - name: Run daily bets script
-        run: node daily_bets.js
+        run: node ./daily_bets.js
+
+      - name: Send results to Telegram (if secrets exist)
+        if: always()
+        run: |
+          if [ -f daily_bets.txt ] && [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+            curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+              -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+              -d text="$(cat daily_bets.txt)"
+          else
+            echo "Skipping Telegram send (file or secrets missing)."
+          fi
