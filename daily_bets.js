@@ -1,206 +1,156 @@
+/**
+ * daily_bets.js
+ * Génère :
+ *  - 5 paris simples les plus fiables
+ *  - 2 combinés sécurisés
+ * Basé sur : odds_fdj.json
+ */
+
 const fs = require("fs");
 
-// =======================================================
-//  FICHIERS D’ENTRÉE
-// =======================================================
-const ODDS_FILE = "odds_fdj.json";
-const PLAYERS_FILE = "players_stats.csv";
-const INJURIES_FILE = "injuries.csv";
-const OUTPUT_FILE = "daily_bets.txt";
+const INPUT = "odds_fdj.json";
+const OUTPUT = "daily_bets.txt";
 
-// -------------------------------------------------------
-//  Fonctions de lecture sécurisées
-// -------------------------------------------------------
-function readJsonSafe(path) {
-    try {
-        if (!fs.existsSync(path)) {
-            console.warn("❌ Fichier introuvable :", path);
-            return [];
-        }
-        return JSON.parse(fs.readFileSync(path, "utf8"));
-    } catch (e) {
-        console.warn("❌ Impossible de lire JSON :", path, e.message);
-        return [];
-    }
-}
+// -----------------------------
+//  Utilitaires de scoring
+// -----------------------------
 
-function readTextSafe(path) {
-    try {
-        if (!fs.existsSync(path)) {
-            console.warn("❌ Fichier introuvable :", path);
-            return "";
-        }
-        return fs.readFileSync(path, "utf8");
-    } catch (e) {
-        console.warn("❌ Impossible de lire fichier texte :", path, e.message);
-        return "";
-    }
-}
-
-// Lecture des fichiers
-const odds = readJsonSafe(ODDS_FILE);
-const injuriesTxt = readTextSafe(INJURIES_FILE);
-
-// -------------------------------------------------------
-//  Parsage du CSV des blessures
-// -------------------------------------------------------
-function loadInjuriesFromCSV(txt) {
-    if (!txt.trim()) return {};
-
-    const lines = txt.split("\n").map(l => l.trim()).filter(Boolean);
-    if (lines.length < 2) return {};
-
-    const header = lines[0].split(",").map(h => h.trim().toLowerCase());
-    const teamIdx = header.indexOf("team");
-    const impactIdx = header.indexOf("impact");
-
-    const map = {};
-
-    for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(",").map(c => c.trim());
-        const team = cols[teamIdx] || "";
-        const impact = parseFloat(cols[impactIdx] || "0");
-
-        if (team) {
-            map[team] = (map[team] || 0) + (impact || 0);
-        }
-    }
-    return map;
-}
-
-const injuryMap = loadInjuriesFromCSV(injuriesTxt);
-
-// -------------------------------------------------------
-//  Scoring FDJ+ (version stable)
-// -------------------------------------------------------
 function scoreMatch(m) {
-    let s = 0;
+    let score = 0;
 
-    // probabilité
-    const prob = Math.max(m.prob_home || 0, m.prob_away || 0);
-    if (prob >= 0.75) s += 3;
-    else if (prob >= 0.62) s += 2;
-    else if (prob >= 0.55) s += 1;
+    // Forte probabilité (modèle + marché normalisé)
+    if (m.p_model > 0.55) score += 2;
 
-    // forme
-    const form = m.form_rating || 0.5;
-    if (form >= 0.75) s += 2;
-    else if (form >= 0.60) s += 1;
+    // Cote raisonnable => plus safe
+    if (m.odds <= 1.65) score += 1;
 
-    // blessures
-    const inj = m.injury || 0;
-    if (inj < 0.08) s += 2;
-    else if (inj < 0.20) s += 1;
+    // Faible marge (bookmaker) => marché propre
+    if (m.p_imp_norm && m.p_imp_norm > 0.40) score += 1;
 
-    // cote
-    const odds = m.best_odds || 2.0;
-    if (odds <= 1.40) s += 2;
-    else if (odds <= 1.60) s += 1;
+    // Bonus si match très déséquilibré
+    if (m.p_model > 0.65) score += 1;
 
-    // différence de niveau
-    const diff = Math.abs((m.team_rating_home || 50) - (m.team_rating_away || 50));
-    if (diff >= 12) s += 2;
-    else if (diff >= 7) s += 1;
-
-    return s;
+    return score;
 }
 
-function confidenceLabel(score) {
-    if (score >= 9) return "⭐⭐⭐⭐⭐ Très haute";
-    if (score >= 7) return "⭐⭐⭐⭐ Haute";
-    if (score >= 5) return "⭐⭐⭐ Moyenne";
-    if (score >= 3) return "⭐⭐ Faible";
-    return "⭐ Très faible";
+// -----------------------------
+//  Lecture & préparation données
+// -----------------------------
+
+function readOdds() {
+    if (!fs.existsSync(INPUT)) {
+        console.error("❌ odds_fdj.json introuvable !");
+        process.exit(1);
+    }
+
+    return JSON.parse(fs.readFileSync(INPUT, "utf8"))
+        .map(r => ({
+            ...r,
+            odds: Number(r.odds)
+        }));
 }
 
-// -------------------------------------------------------
-//  Normalisation données FDJ
-// -------------------------------------------------------
-const matches = (Array.isArray(odds) ? odds : []).map(m => ({
-    home: m.home || m.team_home || m.home_team || "Home",
-    away: m.away || m.team_away || m.away_team || "Away",
-    best_odds: parseFloat(m.best_odds || m.odds || m.cote || 2.0),
-    prob_home: parseFloat(m.prob_home || 0),
-    prob_away: parseFloat(m.prob_away || 0),
-    form_rating: parseFloat(m.form_rating || 0.5),
-    injury: (injuryMap[m.home] || 0) + (injuryMap[m.away] || 0),
-    team_rating_home: parseFloat(m.team_rating_home || 50),
-    team_rating_away: parseFloat(m.team_rating_away || 50)
-}));
+function enrichProbabilities(arr) {
+    const grouped = {};
 
-// Ajout du score
-matches.forEach(m => m.score = scoreMatch(m));
+    arr.forEach((r, i) => {
+        const key = `${r.event_id}::${r.market}`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(i);
+    });
 
-// -------------------------------------------------------
-//  Sélection des TOP 5
-// -------------------------------------------------------
-const singles = matches
-    .slice()
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
+    const res = arr.map(r => ({ ...r }));
 
-// -------------------------------------------------------
-//  Combos sécurisés
-// -------------------------------------------------------
-const safePool = matches
-    .filter(m => m.score >= 5 && m.best_odds <= 1.70)
-    .sort((a, b) => a.best_odds - b.best_odds)
-    .slice(0, 6);
+    Object.keys(grouped).forEach(key => {
+        const idxs = grouped[key];
 
-const combos = [];
+        // Probabilités implicites
+        let sumImp = 0;
+        idxs.forEach(i => {
+            res[i].p_imp_raw = 1 / res[i].odds;
+            sumImp += res[i].p_imp_raw;
+        });
+        idxs.forEach(i => {
+            res[i].p_imp_norm = res[i].p_imp_raw / sumImp;
+        });
 
-if (safePool.length >= 4) {
-    combos.push([safePool[0], safePool[1]]);
-    combos.push([safePool[2], safePool[3]]);
-} else if (safePool.length >= 2) {
-    combos.push([safePool[0], safePool[1]]);
+        // Modèle interne naïf
+        let sumScore = 0;
+        idxs.forEach(i => {
+            res[i].model_score = 1 / Math.pow(res[i].odds, 1.1);
+            sumScore += res[i].model_score;
+        });
+        idxs.forEach(i => {
+            res[i].p_model = res[i].model_score / sumScore;
+        });
+    });
+
+    return res;
 }
 
-// Infos d’un combo
-function comboInfo(arr) {
-    const totalOdds = arr.reduce((sum, m) => sum * m.best_odds, 1);
-    const avgScore = Math.round(arr.reduce((s, m) => s + m.score, 0) / arr.length);
+// -----------------------------
+//  Sélection des paris
+// -----------------------------
+
+function selectBets(data) {
+    const matches = data.map(m => ({
+        ...m,
+        score: scoreMatch(m)
+    }));
+
+    // 5 Paris simples
+    const simple = matches
+        .filter(m => m.score >= 2)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5);
+
+    // 2 combinés (2 matchs chacun)
+    const safe = matches
+        .filter(m => m.score >= 3 && m.odds <= 1.65)
+        .sort((a, b) => a.odds - b.odds)
+        .slice(0, 4);
+
     return {
-        totalOdds: totalOdds.toFixed(2),
-        avgScore,
-        label: confidenceLabel(avgScore)
+        simple,
+        combo1: safe.slice(0, 2),
+        combo2: safe.slice(2, 4)
     };
 }
 
-// -------------------------------------------------------
-//  CONSTRUCTION DU RAPPORT
-// -------------------------------------------------------
-let report = "🔥 PRÉDICTIONS DU JOUR — Modèle FDJ+ 🔥\n\n";
+// -----------------------------
+//  Formatage de la sortie texte
+// -----------------------------
 
-report += "🎯 5 Paris Simples recommandés :\n";
-singles.forEach((m, i) => {
-    report += `${i + 1}. ${m.home} vs ${m.away} — cote ${m.best_odds} — ${confidenceLabel(m.score)}\n`;
-});
+function buildReport(bets) {
+    let txt = "🎯 PARIS DU JOUR – Agent Automatisé\n\n";
 
-report += "\n🧩 Combinés intelligents :\n";
-if (combos.length === 0) {
-    report += "Aucun combiné sûr identifié aujourd'hui.\n";
-} else {
-    combos.forEach((arr, i) => {
-        const info = comboInfo(arr);
-        report += `${i + 1}. ${arr.map(m => `${m.home} vs ${m.away} (${m.best_odds})`).join(" + ")}\n`;
-        report += `   → Cote totale ≈ ${info.totalOdds} — Confiance : ${info.label}\n`;
+    // Paris simples
+    txt += "🔥 5 PARIS SIMPLES FIABLES\n";
+    bets.simple.forEach(m => {
+        txt += `• ${m.runner} (${m.market}) — cote ${m.odds}\n`;
     });
+
+    txt += "\n\n🛡️ COMBINÉS SÉCURISÉS\n";
+
+    txt += `1️⃣ ${bets.combo1.map(m => m.runner + " @" + m.odds).join(" + ")}\n`;
+    txt += `2️⃣ ${bets.combo2.map(m => m.runner + " @" + m.odds).join(" + ")}\n`;
+
+    return txt;
 }
 
-report += "\nℹ️ Notes : modèle heuristique ; utiliser avec prudence.\n";
+// -----------------------------
+//  Main
+// -----------------------------
 
-// -------------------------------------------------------
-//  Écriture dans le fichier TXT
-// -------------------------------------------------------
-try {
-    fs.writeFileSync(OUTPUT_FILE, report, "utf8");
-    console.log("✅ Rapport généré :", OUTPUT_FILE);
-} catch (e) {
-    console.error("❌ Impossible d’écrire daily_bets.txt :", e.message);
+function main() {
+    const raw = readOdds();
+    const enriched = enrichProbabilities(raw);
+    const bets = selectBets(enriched);
+
+    const report = buildReport(bets);
+    fs.writeFileSync(OUTPUT, report, "utf8");
+
+    console.log("✅ daily_bets.txt généré avec succès !");
 }
 
-// Log abrégé dans les Actions
-console.log("\n=== APERÇU ===\n");
-console.log(report.split("\n").slice(0, 25).join("\n"));
-
+main();
