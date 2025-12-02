@@ -1,6 +1,17 @@
 {
-  "name": "agent-fdj",
+  "name": "agent-fdj-open-source",
   "version": "1.0.0",
-  "type": "module",
-  "dependencies": {}
+  "private": true,
+  "description": "Agent FDJ open-source — génération quotidienne de prédictions / paris",
+  "main": "daily_bets.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node ./daily_bets.js",
+    "test": "node -e \"console.log('No tests configured')\""
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "Sylvain34500-dev",
+  "license": "MIT"
 }
