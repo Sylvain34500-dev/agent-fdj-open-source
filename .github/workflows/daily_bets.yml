@@ -3,7 +3,10 @@ name: Daily Bets
 on:
   schedule:
     - cron: "0 8 * * *"   # Exécution tous les jours à 08h00
-  workflow_dispatch:      # Permet de lancer manuellement
+  workflow_dispatch:       # Permet de lancer manuellement
+
+permissions:
+  contents: write          # Autorise GitHub Actions à committer
 
 jobs:
   run-daily-bets:
@@ -19,7 +22,15 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run daily bets script
         run: node daily_bets.js
+
+      - name: Commit updated daily_bets.txt
+        run: |
+          git config --local user.name "github-actions"
+          git config --local user.email "github-actions@github.com"
+          git add daily_bets.txt
+          git commit -m "Update daily bets" || echo "No changes to commit"
+          git push
