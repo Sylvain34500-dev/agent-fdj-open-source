@@ -18,6 +18,6 @@ bot.on("message", (msg) => {
     if (fs.existsSync("daily_bets.txt")) {
         bets = fs.readFileSync("daily_bets.txt", "utf8");
     }
-
+ 
     bot.sendMessage(chatId, bets);
 });
