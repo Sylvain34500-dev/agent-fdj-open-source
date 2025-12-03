@@ -17,9 +17,10 @@ const OUTPUT = "daily_bets.txt";
 function scoreMatch(m) {
     let score = 0;
 
+    // Score basé sur les probabilités implicites
     if (m.p_model > 0.55) score += 2;
     if (m.odds <= 1.65) score += 1;
-    if (m.p_imp_norm && m.p_imp_norm > 0.40) score += 1;
+    if (m.p_imp_norm > 0.40) score += 1;
     if (m.p_model > 0.65) score += 1;
 
     return score;
@@ -53,9 +54,9 @@ function readOdds() {
 function enrichProbabilities(arr) {
     return arr.map(r => {
         r.p_imp_raw = 1 / r.odds;
-        r.p_imp_norm = r.p_imp_raw; // normalisation inutile pour un seul match
+        r.p_imp_norm = r.p_imp_raw; // normalisation inutile ici
         r.model_score = 1 / Math.pow(r.odds, 1.1);
-        r.p_model = r.model_score; // normalisé automatiquement
+        r.p_model = r.model_score;
         return r;
     });
 }
@@ -69,7 +70,7 @@ function selectBets(data) {
         score: scoreMatch(m)
     }));
 
-    const simple = matches
+    const simple = [...matches]
         .sort((a, b) => b.score - a.score)
         .slice(0, 5);
 
