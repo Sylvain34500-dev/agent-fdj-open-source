@@ -1,17 +1,20 @@
-{
-  "name": "agent-fdj-open-source",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Agent FDJ open-source — génération quotidienne de prédictions / paris",
-  "main": "daily_bets.js",
-  "type": "commonjs",
-  "scripts": {
-    "start": "node ./daily_bets.js",
-    "test": "node -e \"console.log('No tests configured')\""
+[
+  {
+    "event_id": "12345",
+    "market": "1N2",
+    "runner": "Equipe A",
+    "odds": 4.2
   },
-  "engines": {
-    "node": ">=18"
+  {
+    "event_id": "12345",
+    "market": "1N2",
+    "runner": "Nul",
+    "odds": 3.1
   },
-  "author": "Sylvain34500-dev",
-  "license": "MIT"
-}
+  {
+    "event_id": "12345",
+    "market": "1N2",
+    "runner": "Equipe B",
+    "odds": 1.85
+  }
+]
