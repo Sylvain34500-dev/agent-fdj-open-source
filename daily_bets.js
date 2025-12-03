@@ -12,16 +12,15 @@ const INPUT = "odds_fdj.json";
 const OUTPUT = "daily_bets.txt";
 
 // -----------------------------
-//  Scoring simple
+//  Scoring simple (basé uniquement sur les cotes FDJ)
 // -----------------------------
 function scoreMatch(m) {
     let score = 0;
 
-    // Score basé sur les probabilités implicites
-    if (m.p_model > 0.55) score += 2;
-    if (m.odds <= 1.65) score += 1;
-    if (m.p_imp_norm > 0.40) score += 1;
-    if (m.p_model > 0.65) score += 1;
+    // Plus la cote est faible, plus le pari est jugé fiable
+    if (m.odds <= 1.40) score += 3;
+    else if (m.odds <= 1.65) score += 2;
+    else if (m.odds <= 2.00) score += 1;
 
     return score;
 }
@@ -49,19 +48,6 @@ function readOdds() {
 }
 
 // -----------------------------
-//  Probabilités implicites + modèle
-// -----------------------------
-function enrichProbabilities(arr) {
-    return arr.map(r => {
-        r.p_imp_raw = 1 / r.odds;
-        r.p_imp_norm = r.p_imp_raw; // normalisation inutile ici
-        r.model_score = 1 / Math.pow(r.odds, 1.1);
-        r.p_model = r.model_score;
-        return r;
-    });
-}
-
-// -----------------------------
 //  Sélection
 // -----------------------------
 function selectBets(data) {
@@ -70,7 +56,7 @@ function selectBets(data) {
         score: scoreMatch(m)
     }));
 
-    const simple = [...matches]
+    const simple = matches
         .sort((a, b) => b.score - a.score)
         .slice(0, 5);
 
@@ -108,8 +94,7 @@ function buildReport(bets) {
 // -----------------------------
 function main() {
     const raw = readOdds();
-    const enriched = enrichProbabilities(raw);
-    const bets = selectBets(enriched);
+    const bets = selectBets(raw);
 
     fs.writeFileSync(OUTPUT, buildReport(bets), "utf8");
     console.log("✅ daily_bets.txt généré avec succès !");
