@@ -1,93 +1,11 @@
-const fs = require('fs');
+🎯 PARIS DU JOUR – Agent Automatisé
 
-// --- Load safely ---
-function safeRead(path) {
-    if (!fs.existsSync(path)) {
-        console.error(`❌ Missing file: ${path}`);
-        return null;
-    }
-    return fs.readFileSync(path, 'utf8');
-}
+🔥 5 PARIS SIMPLES FIABLES
+• Equipe B (1N2) — cote 1.85
+• Equipe A (1N2) — cote 4.2
+• Nul (1N2) — cote 3.1
 
-const oddsRaw = safeRead('odds_fdj.json');
-const playersRaw = safeRead('players_stats.csv');
-const injuriesRaw = safeRead('injuries.csv');
 
-if (!oddsRaw) process.exit(1);
-
-let odds;
-try {
-    odds = JSON.parse(oddsRaw);
-} catch (e) {
-    console.error("❌ Invalid JSON in odds_fdj.json");
-    process.exit(1);
-}
-
-// --- Match scoring ---
-function scoreMatch(m) {
-    let score = 0;
-
-    if (m.probHome > 0.60 || m.probAway > 0.60) score += 2;
-    if (m.formRating > 0.6) score += 1;
-    if (m.injuryImpact < 0.15) score += 1;
-    if (m.odds < 1.55) score += 1;
-
-    return score;
-}
-
-// --- Normalize odds input ---
-const matches = odds
-    .filter(m => m.home && m.away && m.best_odds) // avoid broken entries
-    .map(m => ({
-        team1: m.home,
-        team2: m.away,
-        odds: m.best_odds,
-        probHome: m.prob_home ?? 0,
-        probAway: m.prob_away ?? 0,
-        formRating: m.form_rating ?? 0,
-        injuryImpact: m.injury_impact ?? 1
-    }));
-
-// --- TOP 5 SIMPLE BETS ---
-const simpleBets = matches
-    .map(m => ({ ...m, score: scoreMatch(m) }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
-
-// --- SAFE COMBOS ---
-const safeMatches = matches
-    .map(m => ({ ...m, score: scoreMatch(m) }))
-    .filter(m => m.score >= 3 && m.odds <= 1.60)
-    .sort((a, b) => a.odds - b.odds);
-
-const combo1 = safeMatches.slice(0, 2);
-const combo2 = safeMatches.slice(2, 4);
-
-// --- BUILD REPORT ---
-let report = "";
-report += "🎯 *Paris du jour*\n\n";
-
-report += "🔥 *5 Paris Simples Fiables :*\n";
-if (simpleBets.length === 0) {
-    report += "• Aucun match suffisamment fiable aujourd'hui.\n\n";
-} else {
-    simpleBets.forEach(m => {
-        report += `• ${m.team1} vs ${m.team2} — cote ${m.odds}\n`;
-    });
-}
-
-report += "\n🛡️ *Combinés Sécurisés :*\n\n";
-
-report += "1️⃣ ";
-report += combo1.length === 2
-    ? combo1.map(m => `${m.team1} vs ${m.team2}`).join(" + ")
-    : "Pas assez de matchs sûrs.\n";
-
-report += "\n2️⃣ ";
-report += combo2.length === 2
-    ? combo2.map(m => `${m.team1} vs ${m.team2}`).join(" + ")
-    : "Pas assez de matchs sûrs.\n";
-
-// --- Save ---
-fs.writeFileSync("daily_bets.txt", report);
-console.log("✅ daily_bets.txt generated.");
+🛡️ COMBINÉS SÉCURISÉS
+1️⃣ 
+2️⃣ 
