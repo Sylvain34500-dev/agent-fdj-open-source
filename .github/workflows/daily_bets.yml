@@ -1,11 +1,12 @@
 name: Daily Bets Generator
+
 permissions:
   contents: write
 
 on:
-  schedule:
-    - cron: "0 8 * * *"  # tous les jours à 08:00
   workflow_dispatch:
+  schedule:
+    - cron: "0 10 * * *"
 
 jobs:
   build:
@@ -29,8 +30,7 @@ jobs:
       - name: Commit & Push updates
         run: |
           git config --global user.name "GitHub Bot"
-          git config --global user.email "bot@example.com"
-          git add daily_bets.txt
-          git commit -m "Daily bets update"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "Daily bets update" || echo "No changes to commit"
           git push
-
