@@ -1,4 +1,6 @@
 name: Daily Bets Generator
+permissions:
+  contents: write
 
 on:
   schedule:
