@@ -1,16 +1,20 @@
 {
   "name": "fdj-max-cotes",
   "version": "1.0.0",
-  "description": "Agent FDJ simple : lit odds_fdj.json, calcule EV + Kelly, génère picks.json",
-  "main": "index.js",
+  "description": "Agent FDJ simple : lit odds_fdj.json, calcule EV + envoie via Telegram",
   "type": "module",
+  "main": "fetch_and_score.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "node index.js"
+    "start": "node telegram_server.js",
+    "start:poll": "node telegram_poll_bot.js",
+    "fetch": "node fetch_and_score.js",
+    "test": "node daily_bets.js"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "axios": "^1.0.0",
+    "node-telegram-bot-api": "^0.61.0",
     "node-fetch": "^3.3.2"
   }
 }
