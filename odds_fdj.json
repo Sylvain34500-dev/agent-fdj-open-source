@@ -1,5 +1,5 @@
 [
   { "event_id": "12345", "market": "1N2", "runner": "Equipe A", "odds": 4.2 },
-  { "event_id": "12345", "market": "1N2", "runner": "Nul",      "odds": 3.1 },
+  { "event_id": "12345", "market": "1N2", "runner": "Nul", "odds": 3.1 },
   { "event_id": "12345", "market": "1N2", "runner": "Equipe B", "odds": 1.85 }
 ]
