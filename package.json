@@ -3,12 +3,14 @@
   "version": "1.0.0",
   "description": "Agent FDJ simple : lit odds_fdj.json, calcule EV + Kelly, génère picks.json",
   "main": "index.js",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "test": "node index.js"
   },
   "author": "",
   "license": "MIT",
-  "dependencies": {}
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
 }
