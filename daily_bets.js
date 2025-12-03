@@ -18,16 +18,9 @@ const OUTPUT = "daily_bets.txt";
 function scoreMatch(m) {
     let score = 0;
 
-    // Forte probabilité (modèle + marché normalisé)
     if (m.p_model > 0.55) score += 2;
-
-    // Cote raisonnable => plus safe
     if (m.odds <= 1.65) score += 1;
-
-    // Faible marge (bookmaker) => marché propre
     if (m.p_imp_norm && m.p_imp_norm > 0.40) score += 1;
-
-    // Bonus si match très déséquilibré
     if (m.p_model > 0.65) score += 1;
 
     return score;
@@ -43,13 +36,18 @@ function readOdds() {
         process.exit(1);
     }
 
-    const data = JSON.parse(fs.readFileSync(INPUT, "utf8"));
+    let data = JSON.parse(fs.readFileSync(INPUT, "utf8"));
 
-    // 🔍 Contrôle qualité du JSON
+    // 🔥 Sécurisation : si jamais le JSON n'est pas un tableau
+    if (!Array.isArray(data)) {
+        console.error("❌ Le fichier odds_fdj.json doit contenir un tableau JSON !");
+        process.exit(1);
+    }
+
     data.forEach((row, index) => {
         if (!row.event_id || !row.market || !row.runner || !row.odds) {
             console.error("❌ Ligne invalide dans odds_fdj.json :", row);
-            console.error("➡️ Erreur à la ligne index :", index);
+            console.error("➡️ Erreur à l’index :", index);
             process.exit(1);
         }
     });
@@ -74,7 +72,6 @@ function enrichProbabilities(arr) {
     Object.keys(grouped).forEach(key => {
         const idxs = grouped[key];
 
-        // Probabilités implicites
         let sumImp = 0;
         idxs.forEach(i => {
             res[i].p_imp_raw = 1 / res[i].odds;
@@ -84,7 +81,6 @@ function enrichProbabilities(arr) {
             res[i].p_imp_norm = res[i].p_imp_raw / sumImp;
         });
 
-        // Modèle interne naïf
         let sumScore = 0;
         idxs.forEach(i => {
             res[i].model_score = 1 / Math.pow(res[i].odds, 1.1);
@@ -108,13 +104,11 @@ function selectBets(data) {
         score: scoreMatch(m)
     }));
 
-    // 5 Paris simples
     const simple = matches
         .filter(m => m.score >= 2)
         .sort((a, b) => b.score - a.score)
         .slice(0, 5);
 
-    // 2 combinés (2 matchs chacun)
     const safe = matches
         .filter(m => m.score >= 3 && m.odds <= 1.65)
         .sort((a, b) => a.odds - b.odds)
@@ -128,13 +122,12 @@ function selectBets(data) {
 }
 
 // -----------------------------
-//  Formatage de la sortie texte
+//  Formatage du rapport
 // -----------------------------
 
 function buildReport(bets) {
     let txt = "🎯 PARIS DU JOUR – Agent Automatisé\n\n";
 
-    // Paris simples
     txt += "🔥 5 PARIS SIMPLES FIABLES\n";
     bets.simple.forEach(m => {
         txt += `• ${m.runner} (${m.market}) — cote ${m.odds}\n`;
