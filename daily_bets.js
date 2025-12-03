@@ -43,11 +43,21 @@ function readOdds() {
         process.exit(1);
     }
 
-    return JSON.parse(fs.readFileSync(INPUT, "utf8"))
-        .map(r => ({
-            ...r,
-            odds: Number(r.odds)
-        }));
+    const data = JSON.parse(fs.readFileSync(INPUT, "utf8"));
+
+    // 🔍 Contrôle qualité du JSON
+    data.forEach((row, index) => {
+        if (!row.event_id || !row.market || !row.runner || !row.odds) {
+            console.error("❌ Ligne invalide dans odds_fdj.json :", row);
+            console.error("➡️ Erreur à la ligne index :", index);
+            process.exit(1);
+        }
+    });
+
+    return data.map(r => ({
+        ...r,
+        odds: Number(r.odds)
+    }));
 }
 
 function enrichProbabilities(arr) {
@@ -154,25 +164,4 @@ function main() {
 }
 
 main();
-function readOdds() {
-    if (!fs.existsSync(INPUT)) {
-        console.error("❌ odds_fdj.json introuvable !");
-        process.exit(1);
-    }
 
-    const data = JSON.parse(fs.readFileSync(INPUT, "utf8"));
-
-    // 🔍 Contrôle qualité du JSON
-    data.forEach((row, index) => {
-        if (!row.event_id || !row.market || !row.runner || !row.odds) {
-            console.error("❌ Ligne invalide dans odds_fdj.json :", row);
-            console.error("➡️ Erreur à la ligne index :", index);
-            process.exit(1);
-        }
-    });
-
-    return data.map(r => ({
-        ...r,
-        odds: Number(r.odds)
-    }));
-}
