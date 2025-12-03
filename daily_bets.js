@@ -12,9 +12,8 @@ const INPUT = "odds_fdj.json";
 const OUTPUT = "daily_bets.txt";
 
 // -----------------------------
-//  Utilitaires de scoring
+//  Scoring simple
 // -----------------------------
-
 function scoreMatch(m) {
     let score = 0;
 
@@ -27,30 +26,20 @@ function scoreMatch(m) {
 }
 
 // -----------------------------
-//  Lecture & préparation données
+//  Lecture JSON
 // -----------------------------
-
 function readOdds() {
     if (!fs.existsSync(INPUT)) {
         console.error("❌ odds_fdj.json introuvable !");
         process.exit(1);
     }
 
-    let data = JSON.parse(fs.readFileSync(INPUT, "utf8"));
+    const data = JSON.parse(fs.readFileSync(INPUT, "utf8"));
 
-    // 🔥 Sécurisation : si jamais le JSON n'est pas un tableau
     if (!Array.isArray(data)) {
-        console.error("❌ Le fichier odds_fdj.json doit contenir un tableau JSON !");
+        console.error("❌ Le fichier JSON doit contenir un tableau [] !");
         process.exit(1);
     }
-
-    data.forEach((row, index) => {
-        if (!row.event_id || !row.market || !row.runner || !row.odds) {
-            console.error("❌ Ligne invalide dans odds_fdj.json :", row);
-            console.error("➡️ Erreur à l’index :", index);
-            process.exit(1);
-        }
-    });
 
     return data.map(r => ({
         ...r,
@@ -58,46 +47,22 @@ function readOdds() {
     }));
 }
 
+// -----------------------------
+//  Probabilités implicites + modèle
+// -----------------------------
 function enrichProbabilities(arr) {
-    const grouped = {};
-
-    arr.forEach((r, i) => {
-        const key = `${r.event_id}::${r.market}`;
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(i);
+    return arr.map(r => {
+        r.p_imp_raw = 1 / r.odds;
+        r.p_imp_norm = r.p_imp_raw; // normalisation inutile pour un seul match
+        r.model_score = 1 / Math.pow(r.odds, 1.1);
+        r.p_model = r.model_score; // normalisé automatiquement
+        return r;
     });
-
-    const res = arr.map(r => ({ ...r }));
-
-    Object.keys(grouped).forEach(key => {
-        const idxs = grouped[key];
-
-        let sumImp = 0;
-        idxs.forEach(i => {
-            res[i].p_imp_raw = 1 / res[i].odds;
-            sumImp += res[i].p_imp_raw;
-        });
-        idxs.forEach(i => {
-            res[i].p_imp_norm = res[i].p_imp_raw / sumImp;
-        });
-
-        let sumScore = 0;
-        idxs.forEach(i => {
-            res[i].model_score = 1 / Math.pow(res[i].odds, 1.1);
-            sumScore += res[i].model_score;
-        });
-        idxs.forEach(i => {
-            res[i].p_model = res[i].model_score / sumScore;
-        });
-    });
-
-    return res;
 }
 
 // -----------------------------
-//  Sélection des paris
+//  Sélection
 // -----------------------------
-
 function selectBets(data) {
     const matches = data.map(m => ({
         ...m,
@@ -105,13 +70,11 @@ function selectBets(data) {
     }));
 
     const simple = matches
-        .filter(m => m.score >= 2)
         .sort((a, b) => b.score - a.score)
         .slice(0, 5);
 
     const safe = matches
-        .filter(m => m.score >= 3 && m.odds <= 1.65)
-        .sort((a, b) => a.odds - b.odds)
+        .filter(m => m.odds <= 1.65)
         .slice(0, 4);
 
     return {
@@ -122,9 +85,8 @@ function selectBets(data) {
 }
 
 // -----------------------------
-//  Formatage du rapport
+//  Rapport
 // -----------------------------
-
 function buildReport(bets) {
     let txt = "🎯 PARIS DU JOUR – Agent Automatisé\n\n";
 
@@ -134,7 +96,6 @@ function buildReport(bets) {
     });
 
     txt += "\n\n🛡️ COMBINÉS SÉCURISÉS\n";
-
     txt += `1️⃣ ${bets.combo1.map(m => m.runner + " @" + m.odds).join(" + ")}\n`;
     txt += `2️⃣ ${bets.combo2.map(m => m.runner + " @" + m.odds).join(" + ")}\n`;
 
@@ -144,15 +105,12 @@ function buildReport(bets) {
 // -----------------------------
 //  Main
 // -----------------------------
-
 function main() {
     const raw = readOdds();
     const enriched = enrichProbabilities(raw);
     const bets = selectBets(enriched);
 
-    const report = buildReport(bets);
-    fs.writeFileSync(OUTPUT, report, "utf8");
-
+    fs.writeFileSync(OUTPUT, buildReport(bets), "utf8");
     console.log("✅ daily_bets.txt généré avec succès !");
 }
 
