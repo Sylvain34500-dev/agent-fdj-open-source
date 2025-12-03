@@ -1,17 +1,14 @@
 {
-  "name": "agent-fdj-open-source",
+  "name": "fdj-max-cotes",
   "version": "1.0.0",
-  "private": true,
-  "description": "Agent FDJ open-source — génération quotidienne de prédictions / paris",
-  "main": "daily_bets.js",
+  "description": "Agent FDJ simple : lit odds_fdj.json, calcule EV + Kelly, génère picks.json",
+  "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node ./daily_bets.js",
-    "test": "node -e \"console.log('No tests configured')\""
+    "start": "node index.js",
+    "test": "node index.js"
   },
-  "engines": {
-    "node": ">=18"
-  },
-  "author": "Sylvain34500-dev",
-  "license": "MIT"
+  "author": "",
+  "license": "MIT",
+  "dependencies": {}
 }
