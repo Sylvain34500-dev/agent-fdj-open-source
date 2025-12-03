@@ -1,0 +1,104 @@
+[
+  {
+    "matchId": "undefined-undefined-null",
+    "start": null,
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null
+    },
+    "baseProb": {
+      "home": 0.33,
+      "away": 0.33
+    },
+    "modelProb": {
+      "home": 0.34,
+      "away": 0.34
+    },
+    "ev": {
+      "home": 0,
+      "away": 0
+    },
+    "form": {
+      "home": 0.5,
+      "away": 0.5
+    },
+    "injuries": {
+      "home": 0,
+      "away": 0
+    },
+    "h2h": 0.5,
+    "score": {
+      "home": 0,
+      "away": 0.15
+    }
+  },
+  {
+    "matchId": "undefined-undefined-null",
+    "start": null,
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null
+    },
+    "baseProb": {
+      "home": 0.33,
+      "away": 0.33
+    },
+    "modelProb": {
+      "home": 0.34,
+      "away": 0.34
+    },
+    "ev": {
+      "home": 0,
+      "away": 0
+    },
+    "form": {
+      "home": 0.5,
+      "away": 0.5
+    },
+    "injuries": {
+      "home": 0,
+      "away": 0
+    },
+    "h2h": 0.5,
+    "score": {
+      "home": 0,
+      "away": 0.15
+    }
+  },
+  {
+    "matchId": "undefined-undefined-null",
+    "start": null,
+    "odds": {
+      "home": null,
+      "draw": null,
+      "away": null
+    },
+    "baseProb": {
+      "home": 0.33,
+      "away": 0.33
+    },
+    "modelProb": {
+      "home": 0.34,
+      "away": 0.34
+    },
+    "ev": {
+      "home": 0,
+      "away": 0
+    },
+    "form": {
+      "home": 0.5,
+      "away": 0.5
+    },
+    "injuries": {
+      "home": 0,
+      "away": 0
+    },
+    "h2h": 0.5,
+    "score": {
+      "home": 0,
+      "away": 0.15
+    }
+  }
+]

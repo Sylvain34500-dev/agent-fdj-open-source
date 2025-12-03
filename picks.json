@@ -1,0 +1,61 @@
+{
+  "top": [
+    {
+      "matchId": "undefined-undefined-null",
+      "start": null,
+      "pickSide": "away",
+      "odds": null,
+      "modelProb": 0.34,
+      "ev": 0,
+      "score": 0.15
+    },
+    {
+      "matchId": "undefined-undefined-null",
+      "start": null,
+      "pickSide": "away",
+      "odds": null,
+      "modelProb": 0.34,
+      "ev": 0,
+      "score": 0.15
+    },
+    {
+      "matchId": "undefined-undefined-null",
+      "start": null,
+      "pickSide": "away",
+      "odds": null,
+      "modelProb": 0.34,
+      "ev": 0,
+      "score": 0.15
+    }
+  ],
+  "positive": [],
+  "all": [
+    {
+      "matchId": "undefined-undefined-null",
+      "start": null,
+      "pickSide": "away",
+      "odds": null,
+      "modelProb": 0.34,
+      "ev": 0,
+      "score": 0.15
+    },
+    {
+      "matchId": "undefined-undefined-null",
+      "start": null,
+      "pickSide": "away",
+      "odds": null,
+      "modelProb": 0.34,
+      "ev": 0,
+      "score": 0.15
+    },
+    {
+      "matchId": "undefined-undefined-null",
+      "start": null,
+      "pickSide": "away",
+      "odds": null,
+      "modelProb": 0.34,
+      "ev": 0,
+      "score": 0.15
+    }
+  ]
+}
