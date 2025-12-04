@@ -1,45 +1,55 @@
-const TelegramBot = require("node-telegram-bot-api");
-const fs = require("fs");
-const path = require("path");
+// telegram_bot.js — version propre, simple et stable
 
-// Charger le token depuis config.json
-const config = require("./config.json");
-const token = config.TELEGRAM_BOT_TOKEN; 
+import fs from "fs/promises";
+import TelegramBot from "node-telegram-bot-api";
 
-// Initialiser le bot
-const bot = new TelegramBot(token, { polling: true });
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-// Chemin vers le fichier daily_bets.txt
-const betsFile = path.join(__dirname, "daily_bets.txt");
+// Sécurité : Vérifier que le token existe
+if (!TOKEN) {
+  console.error("❌ ERREUR : TELEGRAM_BOT_TOKEN est manquant !");
+  process.exit(1);
+}
 
-// Fonction pour lire le fichier des pronostics
-function getDailyBets() {
+const bot = new TelegramBot(TOKEN, { polling: true });
+
+const DAILY_FILE = "./daily_bets.txt";
+
+// Fonction : lire le fichier avec gestion d’erreur
+async function getDailyBets() {
   try {
-    return fs.readFileSync(betsFile, "utf8");
+    const txt = await fs.readFile(DAILY_FILE, "utf8");
+    return txt.trim();
   } catch (err) {
-    console.error("Erreur lors de la lecture de daily_bets.txt :", err);
-    return "⚠️ Impossible de charger les pronostics aujourd'hui.";
+    console.error("❌ Impossible de lire daily_bets.txt :", err);
+    return null;
   }
 }
 
-// Commande unique : /today
-bot.onText(/\/today/, (msg) => {
+// Commande unique : /bets
+bot.onText(/\/bets/, async (msg) => {
   const chatId = msg.chat.id;
 
-  const content = getDailyBets();
+  bot.sendMessage(chatId, "📡 Récupération des paris du jour…");
 
-  bot.sendMessage(chatId, content, {
-    parse_mode: "Markdown"
-  });
-});
+  const bets = await getDailyBets();
 
-// Message d'accueil lorsque quelqu’un dit “bonjour” (optionnel)
-bot.on("message", (msg) => {
-  const text = msg.text.toLowerCase();
-
-  if (text.includes("bonjour") || text.includes("salut")) {
-    bot.sendMessage(msg.chat.id, 
-      "👋 Salut ! Tape /today pour recevoir les pronostics du jour."
+  if (!bets) {
+    return bot.sendMessage(
+      chatId,
+      "❌ Aucun pronostic disponible. Lance le script :\n\n`node fetch_and_score.js && node index.js`",
+      { parse_mode: "Markdown" }
     );
   }
+
+  // Envoi du message formaté
+  await bot.sendMessage(chatId, bets, { parse_mode: "Markdown" });
+
+  // Envoi du fichier en pièce jointe (optionnel mais propre)
+  await bot.sendDocument(chatId, DAILY_FILE).catch(() => {});
 });
+
+// Message d’accueil
+bot.on("polling_error", (err) => console.error("💥 POLLING ERROR :", err));
+
+console.log("🤖 Bot Telegram démarré : commande disponible → /bets");
