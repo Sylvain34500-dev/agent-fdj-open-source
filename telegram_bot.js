@@ -6,21 +6,26 @@ const app = express();
 app.use(express.json());
 
 // =======================================
-// CONFIG TELEGRAM
+// 🔐 CONFIG
 // =======================================
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const API_URL = `https://api.telegram.org/bot${TOKEN}`;
 
-// Fonction générique pour envoyer un message Telegram
+// Fonction d’envoi de message
 async function sendMessage(chatId, text) {
-    await axios.post(`${API_URL}/sendMessage`, {
-        chat_id: chatId,
-        text: text
-    });
+    try {
+        await axios.post(`${API_URL}/sendMessage`, {
+            chat_id: chatId,
+            text: text,
+            parse_mode: "Markdown"
+        });
+    } catch (e) {
+        console.error("Erreur en envoyant un message :", e.response?.data || e);
+    }
 }
 
 // =======================================
-// WEBHOOK — reçoit les messages Telegram
+// 📩 WEBHOOK TELEGRAM
 // =======================================
 app.post("/webhook", async (req, res) => {
     const update = req.body;
@@ -31,29 +36,30 @@ app.post("/webhook", async (req, res) => {
 
         if (text === "/bets") {
             let bets = "❌ Aucun fichier daily_bets.txt trouvé.";
-
             if (fs.existsSync("daily_bets.txt")) {
                 bets = fs.readFileSync("daily_bets.txt", "utf8");
             }
-
             await sendMessage(chatId, bets);
         } else {
-            await sendMessage(chatId, "Envoie /bets pour obtenir les pronostics !");
+            await sendMessage(
+                chatId,
+                "Commande inconnue. Envoie `/bets` pour recevoir les pronostics."
+            );
         }
     }
 
-    res.sendStatus(200); // Réponse OK au webhook
+    res.sendStatus(200);
 });
 
 // =======================================
-// KEEP-ALIVE POUR RENDER (utile avec UptimeRobot)
+// 🔄 KEEP-ALIVE pour Render + UptimeRobot
 // =======================================
-app.get("/", (req, res) => res.send("Bot is running on Render 🚀"));
+app.get("/", (req, res) => {
+    res.send("🤖 Bot Telegram FDJ en ligne !");
+});
 
 // =======================================
-// SERVEUR
+// 🚀 LANCEMENT DU SERVEUR
 // =======================================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log("🚀 Bot Telegram actif via Webhook sur Render !");
-});
+app.listen(PORT, () => console.log("Bot Telegram opérationnel 🚀"));
