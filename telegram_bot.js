@@ -1,58 +1,52 @@
 const fs = require("fs");
+const express = require("express");
 const axios = require("axios");
+const app = express();
 
-// ==================================================
-//  CONFIG — Remplace par TON token privé
-// ==================================================
-const TOKEN = process.env.TELEGRAM_TOKEN; // On va l'ajouter dans GitHub Secrets
-const API = `https://api.telegram.org/bot${TOKEN}`;
+app.use(express.json());
 
-// ==================================================
-//  Fonction pour envoyer un message
-// ==================================================
+// =======================================
+// CONFIG
+// =======================================
+const TOKEN = process.env.TELEGRAM_TOKEN;
+const API_URL = `https://api.telegram.org/bot${TOKEN}`;
+
+// Fonction pour envoyer un message
 async function sendMessage(chatId, text) {
-    await axios.post(`${API}/sendMessage`, {
+    await axios.post(`${API_URL}/sendMessage`, {
         chat_id: chatId,
         text: text,
         parse_mode: "Markdown"
     });
 }
 
-// ==================================================
-//  Serveur simple pour recevoir les messages Telegram
-// ==================================================
-const http = require("http");
-const PORT = process.env.PORT || 3000;
+// Réception des messages Telegram (webhook)
+app.post("/webhook", async (req, res) => {
+    const update = req.body;
 
-http.createServer(async (req, res) => {
-    if (req.method === "POST") {
-        let body = "";
+    if (update.message) {
+        const chatId = update.message.chat.id;
+        const text = update.message.text;
 
-        req.on("data", chunk => {
-            body += chunk.toString();
-        });
-
-        req.on("end", async () => {
-            const update = JSON.parse(body);
-
-            if (update.message) {
-                const chatId = update.message.chat.id;
-                const text = update.message.text;
-
-                if (text === "/bets") {
-                    let bets = fs.existsSync("daily_bets.txt")
-                        ? fs.readFileSync("daily_bets.txt", "utf8")
-                        : "❌ Aucun fichier daily_bets.txt trouvé.";
-
-                    await sendMessage(chatId, bets);
-                } else {
-                    await sendMessage(chatId, "Envoie /bets pour recevoir les pronostics !");
-                }
+        if (text === "/bets") {
+            let bets = "❌ Aucun fichier daily_bets.txt trouvé.";
+            if (fs.existsSync("daily_bets.txt")) {
+                bets = fs.readFileSync("daily_bets.txt", "utf8");
             }
-
-            res.end("OK");
-        });
-    } else {
-        res.end("Running");
+            await sendMessage(chatId, bets);
+        } else {
+            await sendMessage(chatId, "Envoie /bets pour obtenir les pronostics !");
+        }
     }
-}).listen(PORT, () => console.log("Bot Telegram actif !"));
+
+    res.sendStatus(200);
+});
+
+// Petit endpoint pour keep-alive Render
+app.get("/", (req, res) => res.send("Bot is running"));
+
+// Lancement serveur
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log("🚀 Telegram bot actif sur Render !");
+});
