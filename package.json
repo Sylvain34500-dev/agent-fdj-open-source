@@ -1,20 +1,14 @@
 {
-  "name": "fdj-max-cotes",
+  "name": "telegram-bot-bets",
   "version": "1.0.0",
-  "description": "Agent FDJ simple : lit odds_fdj.json, calcule EV + envoie via Telegram",
-  "type": "module",
-  "main": "fetch_and_score.js",
+  "description": "Bot Telegram pour envoyer les pronostics",
+  "main": "telegram_bot.js",
+  "type": "commonjs",
   "scripts": {
-    "start": "node telegram_server.js",
-    "start:poll": "node telegram_poll_bot.js",
-    "fetch": "node fetch_and_score.js",
-    "test": "node daily_bets.js"
+    "start": "node telegram_bot.js"
   },
-  "author": "",
-  "license": "MIT",
   "dependencies": {
-    "axios": "^1.0.0",
-    "node-telegram-bot-api": "^0.61.0",
-    "node-fetch": "^3.3.2"
+    "axios": "^1.6.0",
+    "express": "^4.18.2"
   }
 }
