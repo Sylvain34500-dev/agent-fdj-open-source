@@ -1,11 +1,16 @@
-// index.js — assemble les paris et génère daily_bets.txt
+// index.js — lance le scraper + expose une route /run-scraper
 import fs from "fs/promises";
 import fetch from "node-fetch";
+import express from "express";
 
 const PICKS_FILE = "./picks.json";
 const OUTPUT_FILE = "./daily_bets.txt";
 
-// Formateur pour le daily_bets.txt
+const app = express();
+
+// -----------------------------
+//  FORMATEUR DU daily_bets.txt
+// -----------------------------
 function formatDailyBets({ top, positive }) {
   let txt = "";
   txt += `🎯 PARIS DU JOUR – Agent Automatisé\n\n`;
@@ -20,7 +25,6 @@ function formatDailyBets({ top, positive }) {
 
   txt += `\n\n🛡️ COMBINÉS SÉCURISÉS\n`;
 
-  // 2 combinés automatiques
   if (positive.length >= 2) {
     txt += `1️⃣ ${positive[0].home} vs ${positive[0].away}\n`;
   }
@@ -31,7 +35,10 @@ function formatDailyBets({ top, positive }) {
   return txt.trim();
 }
 
-async function main() {
+// -----------------------------
+//  FONCTION PRINCIPALE DU SCRAPER
+// -----------------------------
+async function generateDailyBets() {
   console.log("📥 Chargement des picks…");
 
   const raw = await fs.readFile(PICKS_FILE, "utf8");
@@ -49,6 +56,24 @@ async function main() {
   console.log("✔ daily_bets.txt généré avec succès !");
 }
 
-main().catch((err) => {
-  console.error("❌ ERROR:", err);
+// -----------------------------
+//  ROUTE HTTP POUR CRON EXTERNE
+// -----------------------------
+app.get("/run-scraper", async (req, res) => {
+  try {
+    await generateDailyBets();
+    res.send("✔ Scraper exécuté et daily_bets.txt mis à jour !");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("❌ Erreur lors de l'exécution du scraper.");
+  }
 });
+
+// -----------------------------
+//  SERVER EXPRESS (OBLIGATOIRE POUR RENDER)
+// -----------------------------
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("🚀 Serveur en ligne sur le port " + PORT);
+});
+
