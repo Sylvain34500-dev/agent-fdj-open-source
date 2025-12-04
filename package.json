@@ -1,16 +1,18 @@
 {
-  "name": "fdj-agent",
+  "name": "agent-fdj-open-source",
   "version": "1.0.0",
+  "description": "Bot Telegram + Scraper FDJ open source",
   "type": "module",
-  "main": "index.js",
+  "main": "telegram_bot.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node telegram_bot.js",
     "fetch": "node fetch_and_score.js"
   },
   "dependencies": {
     "node-fetch": "2.6.7",
     "cheerio": "^1.0.0-rc.12",
-    "p-retry": "^5.0.0",
-    "telegraf": "^4.15.0"
+    "p-retry": "^6.0.1",
+    "dotenv": "^16.4.5",
+    "telegraf": "^4.16.0"
   }
 }
