@@ -1,26 +1,27 @@
 const fs = require("fs");
 const express = require("express");
 const axios = require("axios");
-const app = express();
 
+const app = express();
 app.use(express.json());
 
 // =======================================
-// CONFIG
+// CONFIG TELEGRAM
 // =======================================
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const API_URL = `https://api.telegram.org/bot${TOKEN}`;
 
-// Fonction pour envoyer un message
+// Fonction générique pour envoyer un message Telegram
 async function sendMessage(chatId, text) {
     await axios.post(`${API_URL}/sendMessage`, {
         chat_id: chatId,
-        text: text,
-        parse_mode: "Markdown"
+        text: text
     });
 }
 
-// Réception des messages Telegram (webhook)
+// =======================================
+// WEBHOOK — reçoit les messages Telegram
+// =======================================
 app.post("/webhook", async (req, res) => {
     const update = req.body;
 
@@ -30,23 +31,29 @@ app.post("/webhook", async (req, res) => {
 
         if (text === "/bets") {
             let bets = "❌ Aucun fichier daily_bets.txt trouvé.";
+
             if (fs.existsSync("daily_bets.txt")) {
                 bets = fs.readFileSync("daily_bets.txt", "utf8");
             }
+
             await sendMessage(chatId, bets);
         } else {
             await sendMessage(chatId, "Envoie /bets pour obtenir les pronostics !");
         }
     }
 
-    res.sendStatus(200);
+    res.sendStatus(200); // Réponse OK au webhook
 });
 
-// Petit endpoint pour keep-alive Render
-app.get("/", (req, res) => res.send("Bot is running"));
+// =======================================
+// KEEP-ALIVE POUR RENDER (utile avec UptimeRobot)
+// =======================================
+app.get("/", (req, res) => res.send("Bot is running on Render 🚀"));
 
-// Lancement serveur
+// =======================================
+// SERVEUR
+// =======================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log("🚀 Telegram bot actif sur Render !");
+    console.log("🚀 Bot Telegram actif via Webhook sur Render !");
 });
