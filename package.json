@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node telegram_bot.js",
     "fetch": "node fetch_and_score.js",
-    "buildDaily": "node index.js"
+    "buildDaily": "node index.js",
+    "cron": "node cron.js"
   },
   "dependencies": {
     "node-fetch": "2.6.7",
