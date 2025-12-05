@@ -1,5 +1,6 @@
 // cron.js
-import axios from "axios";
+require("dotenv").config();
+const axios = require("axios");
 
 const BOT_URL = process.env.BOT_URL;
 
