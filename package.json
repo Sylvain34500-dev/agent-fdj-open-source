@@ -3,17 +3,20 @@
   "version": "1.0.0",
   "description": "Bot Telegram + Scraper FDJ open source",
   "main": "telegram_bot.js",
+
   "scripts": {
     "start": "node telegram_bot.js",
     "fetch": "node fetch_and_score.js",
     "buildDaily": "node index.js",
     "cron": "node cron.js"
   },
+
   "dependencies": {
     "node-fetch": "2.6.7",
     "cheerio": "^1.0.0-rc.12",
     "p-retry": "^6.0.1",
     "dotenv": "^16.4.5",
-    "node-telegram-bot-api": "^0.61.0"
+    "node-telegram-bot-api": "^0.61.0",
+    "axios": "^1.6.7"
   }
 }
