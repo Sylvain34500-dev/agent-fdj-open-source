@@ -10,20 +10,19 @@ function formatDailyBets({ top, positive }) {
   txt += `🎯 PARIS DU JOUR – Agent Automatisé\n\n`;
 
   txt += `🔥 5 PARIS SIMPLES FIABLES\n`;
-  top.slice(0, 5).forEach((p, i) => {
+  top.slice(0, 5).forEach((p) => {
     const team = p.pickSide === "home" ? p.home : p.away;
-    const odd = p.odds ? p.odds.toFixed(2) : "?";
-    txt += `• ${team} (1N2) — cote ${odd}\n`;
+    const odd = p.odds ? Number(p.odds).toFixed(2) : "?";
+    txt += `• ${team} — cote ${odd}\n`;
   });
 
   txt += `\n\n🛡️ COMBINÉS SÉCURISÉS\n`;
 
-  if (positive.length >= 2) {
+  if (positive[0])
     txt += `1️⃣ ${positive[0].home} vs ${positive[0].away}\n`;
-  }
-  if (positive.length >= 4) {
+
+  if (positive[1])
     txt += `2️⃣ ${positive[1].home} vs ${positive[1].away}\n`;
-  }
 
   return txt.trim();
 }
@@ -43,11 +42,10 @@ async function main() {
 
   fs.writeFileSync(OUTPUT_FILE, formatted);
 
-  console.log("✔ daily_bets.txt généré avec succès !");
+  console.log("✔ daily_bets.txt généré !");
 }
 
 main().catch((err) => {
   console.error("❌ ERROR:", err);
 });
-
 
