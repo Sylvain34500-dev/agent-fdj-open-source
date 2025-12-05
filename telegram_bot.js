@@ -1,20 +1,15 @@
-import TelegramBot from "node-telegram-bot-api";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+const TelegramBot = require("node-telegram-bot-api");
+const fs = require("fs");
+const path = require("path");
 
-// Fix pour __dirname en ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-const token = process.env.TELEGRAM_BOT_TOKEN;
-
-if (!token) {
-    console.error("❌ FATAL: TELEGRAM_BOT_TOKEN manquant !");
+if (!TELEGRAM_TOKEN) {
+    console.error("❌ TELEGRAM_BOT_TOKEN manquant !");
     process.exit(1);
 }
 
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 
 // ------------------------------
 //  Chargement du fichier daily_bets.txt
@@ -58,4 +53,3 @@ bot.on("message", (msg) => {
 });
 
 console.log("🚀 Bot Telegram en ligne !");
-
