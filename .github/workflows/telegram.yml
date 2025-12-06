@@ -1,27 +1,32 @@
-name: Run Telegram Bot
+name: Telegram Bot Deploy
 
 on:
-  schedule:
-    - cron: "*/10 * * * *"   # toutes les 10 minutes
-  workflow_dispatch:         # permet de lancer manuellement
+  push:
+    branches: ["main"]
 
 jobs:
-  run-bot:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout du code
-        uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Install Node
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '18'
 
-      - name: Installer dépendances
+      - name: Install dependencies
         run: npm install
 
-      - name: Lancer le bot Telegram
-        run: node telegram_bot.js
+      - name: Run linter
+        run: npm test --if-present
+
+      - name: Deploy to Render
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+          -H "Authorization: Bearer $RENDER_API_KEY" \
+          -H "Content-Type: application/json"
