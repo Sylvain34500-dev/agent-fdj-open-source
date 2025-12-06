@@ -1,0 +1,49 @@
+name: daily-picks
+
+# run every 30 minutes
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # permet de lancer manuellement depuis l'onglet Actions
+
+jobs:
+  build-and-generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true  # permet de pousser avec GITHUB_TOKEN
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # ou 18/22 selon préférence
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run scraper & generator
+        # exécute le script qui génère picks.json et daily_bets.txt
+        run: |
+          node fetch_and_score.js
+          node index.js || true
+
+      - name: Show changed files
+        run: git status --porcelain && ls -la
+
+      - name: Commit and push changes if any
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add picks.json picks_full.json daily_bets.txt || true
+            git commit -m "auto: update picks/daily_bets (from GitHub Actions)" || echo "nothing to commit"
+            git push origin HEAD:main
+          else
+            echo "No changes to commit"
+          fi
+        env:
+          # GITHUB_TOKEN est injecté automatiquement dans les actions
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
