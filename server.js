@@ -10,7 +10,7 @@ const TelegramBot = require("node-telegram-bot-api");
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TOKEN;
 const BOT_URL = process.env.BOT_URL; // ex: https://agent-fdj-open-source.onrender.com
 const PORT = process.env.PORT || 10000;
-const RENDER_DEPLOY_HOOK = process.env.RENDER_DEPLOY_HOOK; // (optionnel) pour déclencher redeploy depuis GitHub Action
+const RENDER_DEPLOY_HOOK = process.env.RENDER_DEPLOY_HOOK;
 
 if (!TELEGRAM_TOKEN) {
   console.error("❌ TELEGRAM token manquant (TELEGRAM_BOT_TOKEN or TELEGRAM_TOKEN)");
@@ -20,9 +20,12 @@ if (!BOT_URL) {
   console.warn("⚠ BOT_URL non défini — le webhook ne pourra pas être configuré automatiquement.");
 }
 
+// IMPORTANT : pas de polling car webhook
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: false });
 
-// expose function pour traiter les updates (utilisé par le webhook)
+/* -----------------------------
+      🔥 CHARGER LES PRONOS
+--------------------------------*/
 function loadDailyBets() {
   try {
     const filePath = path.join(__dirname, "daily_bets.txt");
@@ -35,9 +38,11 @@ function loadDailyBets() {
   }
 }
 
+/* -----------------------------
+      🔥 TRAITER LES MESSAGES
+--------------------------------*/
 async function handleUpdate(update) {
   try {
-    // si c'est un message texte
     if (update.message && update.message.text) {
       const msg = update.message;
       const text = msg.text.trim();
@@ -52,7 +57,6 @@ async function handleUpdate(update) {
         return;
       }
 
-      // message par défaut
       await bot.sendMessage(chatId, "Commande inconnue. Utilisez /bets pour recevoir les pronostics.");
     }
   } catch (err) {
@@ -60,69 +64,67 @@ async function handleUpdate(update) {
   }
 }
 
-// Bind la méthode processUpdate pour utiliser avec express webhook route
+// Remplace processUpdate pour être utilisé par Express webhook
 bot.processUpdate = (update) => {
-  // on délègue au handler async (ne pas attendre)
   handleUpdate(update).catch((e) => console.error(e));
 };
 
-// configure webhook si on a BOT_URL
+/* -----------------------------
+      🔥 CONFIGURER LE WEBHOOK
+--------------------------------*/
 async function configureWebhook() {
   if (!BOT_URL) return;
-  const webhookUrl = `${BOT_URL.replace(/\/+$/,"")}/webhook/${TELEGRAM_TOKEN}`;
+  const webhookUrl = `${BOT_URL.replace(/\/+$/, "")}/webhook/${TELEGRAM_TOKEN}`;
   try {
     await bot.setWebHook(webhookUrl);
-    console.log("✔ webhook configuré:", webhookUrl);
+    console.log("✔ Webhook configuré:", webhookUrl);
   } catch (err) {
-    console.error("Erreur setWebHook:", err && err.message);
+    console.error("❌ Erreur setWebHook:", err && err.message);
   }
 }
 
-// Express app
+/* -----------------------------
+                EXPRESS
+--------------------------------*/
 const app = express();
 app.use(bodyParser.json());
 
-// webhook endpoint pour Telegram
+// Webhook pour Telegram
 app.post(`/webhook/${TELEGRAM_TOKEN}`, (req, res) => {
-  // Telegram POST -> on donne la payload à node-telegram-bot-api
   try {
     const update = req.body;
-    // processUpdate doit exister (on l'a défini plus haut)
-    if (typeof bot.processUpdate === "function") {
-      bot.processUpdate(update);
-    } else {
-      console.warn("processUpdate non disponible");
-    }
+    bot.processUpdate(update); 
     res.sendStatus(200);
   } catch (err) {
-    console.error("webhook handling error:", err);
+    console.error("webhook error:", err);
     res.sendStatus(500);
   }
 });
 
-// endpoint pour réveiller / forcer regen daily_bets (utilisé par GitHub Action ou cron externe)
+// endpoint appelé par GitHub Action ou cron externe
 app.get("/run-cron", async (req, res) => {
   try {
-    // Option A: si fetch_and_score.js ou index.js est sur le serveur, on pourrait require() et exécuter.
-    // Ici on répond OK et laisse GitHub Action exécuter un fetch_and_score qui commit/push, ou on déclenche un redeploy si hook donné.
     if (RENDER_DEPLOY_HOOK) {
-      // Déclenche un redeploy (Render deploy hook)
-      await axios.post(RENDER_DEPLOY_HOOK);
+      await axios.post(RENDER_DEPLOY_HOOK); // 🔥 redeploy automatique Render
       console.log("Deploy hook appelé.");
     }
     res.json({ ok: true, msg: "Cron endpoint hit" });
   } catch (err) {
-    console.error("run-cron error:", err && err.message);
+    console.error("run-cron error:", err);
     res.status(500).json({ ok: false, err: err.message });
   }
 });
 
-// health
+// Health
 app.get("/", (req, res) => res.send("Bot server running"));
 
-// start
-app.listen(PORT, async () => {
-  console.log("Server running on port", PORT);
+/* -----------------------------
+            START SERVER
+--------------------------------*/
+const server = app.listen(PORT, async () => {
+  console.log("🚀 Server running on port", PORT);
   await configureWebhook();
 });
 
+// Export pour Render, tests, etc.
+module.exports = server;
