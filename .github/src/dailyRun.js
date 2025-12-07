@@ -1,55 +1,42 @@
-// src/dailyRun.js
-require("dotenv").config(); // lit .env si présent (utile en local)
-const { scrapePronosoft } = require("./scraper/pronosoft");
-const { sendTelegramMessage } = require("./telegram");
+import "dotenv/config";
+import { scrapePronosoft } from "./scraper/pronosoft.js";
+import TelegramBot from "node-telegram-bot-api";
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
-if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-  console.error("Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID in env.");
-  process.exit(1);
-}
-
-function escapeHtml(s) {
-  if (!s) return "";
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-(async function main() {
+async function runDaily() {
   try {
+    console.log("Scraping Pronosoft…");
+
     const matches = await scrapePronosoft();
 
     if (!matches || matches.length === 0) {
-      await sendTelegramMessage(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, "⚠️ Aucun match trouvé aujourd'hui sur Pronosoft.");
-      return;
+      throw new Error("Aucun match trouvé.");
     }
 
-    let msg = `<b>📊 Pronostics du jour</b>\n\n`;
-    // limite par exemple aux 30 premiers
-    matches.slice(0, 50).forEach(m => {
-      msg += `<b>${escapeHtml(m.teams)}</b>\n`;
-      if (m.time) msg += `⏰ ${escapeHtml(m.time)}\n`;
-      if (m.odds) {
-        const h = m.odds.home || "-";
-        const n = m.odds.draw || "-";
-        const a = m.odds.away || "-";
-        msg += `💸 ${escapeHtml(h)} | ${escapeHtml(n)} | ${escapeHtml(a)}\n`;
-      }
+    let message = "🔥 *Ticket FDJ du jour* 🔥\n\n";
+
+    for (const m of matches) {
+      message += `🕒 *${m.time}*\n`;
+      message += `⚽ ${m.teams}\n`;
+      message += `📊 Cotes : ${m.odds.home} / ${m.odds.draw} / ${m.odds.away}\n`;
+
       if (m.comment) {
-        msg += `📝 ${escapeHtml(m.comment)}\n`;
+        message += `📝 *Analyse*: ${m.comment}\n`;
       }
-      msg += `\n`;
+
+      message += "\n";
+    }
+
+    // Telegram
+    const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
+    await bot.sendMessage(process.env.TELEGRAM_CHAT_ID, message, {
+      parse_mode: "Markdown",
     });
 
-    await sendTelegramMessage(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, msg);
-    console.log("Message envoyé");
+    console.log("Message envoyé à Telegram !");
   } catch (err) {
-    console.error("dailyRun error:", err && err.message || err);
-    // en cas d'erreur, on envoie un message d'erreur (optionnel)
-    try {
-      await sendTelegramMessage(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, "❌ Erreur lors du scrape / envoi : " + (err && err.message));
-    } catch (e) { /* ignore */ }
-    process.exit(1);
+    console.error("Erreur dailyRun:", err);
   }
-})();
+}
+
+runDaily();
+
