@@ -1,42 +1,49 @@
+// src/dailyRun.js
 import "dotenv/config";
 import { scrapePronosoft } from "./scraper/pronosoft.js";
-import TelegramBot from "node-telegram-bot-api";
+import { sendTelegramMessage } from "./telegram.js";
 
-async function runDaily() {
+// utile si tu veux filtrer par date/heure : on suppose matches du jour
+function formatMatchesMessage(matches) {
+  let msg = "📊 *Pronostics du jour*\n\n";
+  if (!matches || matches.length === 0) {
+    msg += "_Aucun match trouvé aujourd'hui._";
+    return msg;
+  }
+
+  matches.forEach((m) => {
+    msg += `*${m.competition || "Match"}*\n`;
+    if (m.time) msg += `⏰ ${m.time}\n`;
+    if (m.teams) msg += `🆚 ${m.teams}\n`;
+    if (m.odds && (m.odds.home || m.odds.draw || m.odds.away)) {
+      msg += `💸 ${m.odds.home || "-"} | ${m.odds.draw || "-"} | ${m.odds.away || "-"}\n`;
+    }
+    if (m.comment) {
+      // tronque si trop long
+      const c = (m.comment.length > 800) ? m.comment.slice(0, 800) + "…" : m.comment;
+      msg += `📝 ${c}\n`;
+    }
+    msg += `\n`;
+  });
+
+  return msg;
+}
+
+async function main() {
   try {
-    console.log("Scraping Pronosoft…");
-
     const matches = await scrapePronosoft();
-
-    if (!matches || matches.length === 0) {
-      throw new Error("Aucun match trouvé.");
-    }
-
-    let message = "🔥 *Ticket FDJ du jour* 🔥\n\n";
-
-    for (const m of matches) {
-      message += `🕒 *${m.time}*\n`;
-      message += `⚽ ${m.teams}\n`;
-      message += `📊 Cotes : ${m.odds.home} / ${m.odds.draw} / ${m.odds.away}\n`;
-
-      if (m.comment) {
-        message += `📝 *Analyse*: ${m.comment}\n`;
-      }
-
-      message += "\n";
-    }
-
-    // Telegram
-    const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
-    await bot.sendMessage(process.env.TELEGRAM_CHAT_ID, message, {
-      parse_mode: "Markdown",
-    });
-
-    console.log("Message envoyé à Telegram !");
+    // tu peux filtrer ici pour ne garder que certains sports si besoin
+    const message = formatMatchesMessage(matches);
+    await sendTelegramMessage(message, { parse_mode: "Markdown" });
+    console.log("Message envoyé. Matches:", matches.length);
   } catch (err) {
-    console.error("Erreur dailyRun:", err);
+    console.error("dailyRun error:", err && err.message);
+    // en cas d'erreur on peut envoyer un message d'alerte (optionnel)
   }
 }
 
-runDaily();
+if (require.main === module) {
+  main();
+}
 
+export default main;
