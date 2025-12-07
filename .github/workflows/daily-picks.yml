@@ -1,10 +1,11 @@
 name: daily-picks
 
-# run every 30 minutes
+# Cron runs in UTC. Paris = UTC+1 (winter) -> 06:00 UTC = 07:00 CET.
+# NOTE DST: adjust cron if needed (in summer Paris=UTC+2 -> set to 05:00 UTC if you want 07:00 local).
 on:
   schedule:
-    - cron: '*/30 * * * *'
-  workflow_dispatch: # permet de lancer manuellement depuis l'onglet Actions
+    - cron: '0 6 * * *'   # every day at 06:00 UTC => 07:00 Paris (winter)
+  workflow_dispatch: {}
 
 jobs:
   build-and-generate:
@@ -14,36 +15,36 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: true  # permet de pousser avec GITHUB_TOKEN
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # ou 18/22 selon préférence
+          node-version: 18
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install deps
+        run: npm ci
 
       - name: Run scraper & generator
-        # exécute le script qui génère picks.json et daily_bets.txt
         run: |
           node fetch_and_score.js
-          node index.js || true
+          node index.js
 
-      - name: Show changed files
-        run: git status --porcelain && ls -la
-
-      - name: Commit and push changes if any
+      - name: Commit daily_bets if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain)" ]; then
             git add picks.json picks_full.json daily_bets.txt || true
-            git commit -m "auto: update picks/daily_bets (from GitHub Actions)" || echo "nothing to commit"
-            git push origin HEAD:main
+            git commit -m "auto: update picks/daily_bets (from GH Action)" || true
+            git push origin HEAD:main || true
           else
-            echo "No changes to commit"
+            echo "No changes"
           fi
         env:
-          # GITHUB_TOKEN est injecté automatiquement dans les actions
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger Render redeploy (optional)
+        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+
