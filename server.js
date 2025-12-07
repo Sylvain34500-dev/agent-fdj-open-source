@@ -1,63 +1,32 @@
-const express = require("express");
-const axios = require("axios");
-const bodyParser = require("body-parser");
-require("dotenv").config();
+import express from "express";
+import bodyParser from "body-parser";
+import TelegramBot from "node-telegram-bot-api";
+
+const TOKEN = process.env.TELEGRAM_TOKEN;
+const URL = process.env.RENDER_EXTERNAL_URL; // ex: https://agent-fdj-open-source.onrender.com
+const PORT = process.env.PORT || 10000;
 
 const app = express();
 app.use(bodyParser.json());
 
-const TOKEN = process.env.TELEGRAM_TOKEN;
-const API_URL = `https://api.telegram.org/bot${TOKEN}`;
+// --- MODE WEBHOOK ---
+const bot = new TelegramBot(TOKEN, { webHook: true });
+bot.setWebHook(`${URL}/webhook/${TOKEN}`);
 
-// --- ROOT TEST ---
-app.get("/", (req, res) => {
-  res.send("Bot Telegram OK - Render is running!");
+console.log("Webhook registered:", `${URL}/webhook/${TOKEN}`);
+
+// --- ROUTE WEBHOOK ---
+app.post(`/webhook/${TOKEN}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
 });
 
-// --- WEBHOOK ---
-app.post(`/webhook/${TOKEN}`, async (req, res) => {
-  try {
-    const message = req.body.message;
-
-    // Réponse immédiate pour Telegram
-    res.status(200).send("OK");
-
-    if (!message || !message.text) return;
-
-    const chatId = message.chat.id;
-    const text = message.text.trim();
-
-    if (text === "/bets") {
-      const responseMsg = `
-🔥 *5 PARIS SIMPLES FIABLES*
-• Équipe B (1N2) — cote 1.85
-• Équipe A (1N2) — cote 4.2
-• Nul (1N2) — cote 3.1
-
-🧱 *COMBINÉS SÉCURISÉS*
-1️⃣
-2️⃣
-`;
-      await axios.post(`${API_URL}/sendMessage`, {
-        chat_id: chatId,
-        text: responseMsg,
-        parse_mode: "Markdown"
-      });
-    } else {
-      await axios.post(`${API_URL}/sendMessage`, {
-        chat_id: chatId,
-        text: "Commande inconnue. Utilisez /bets."
-      });
-    }
-
-  } catch (error) {
-    console.error("Webhook error:", error);
-  }
+// --- COMMANDE /bets ---
+bot.onText(/\/bets/, (msg) => {
+  bot.sendMessage(msg.chat.id, "Voici les paris du jour !");
 });
 
-// --- START SERVER ---
-const PORT = process.env.PORT || 3000;
+// --- LANCEMENT DU SERVEUR HTTP ---
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
-
