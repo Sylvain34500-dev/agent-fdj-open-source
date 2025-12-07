@@ -1,29 +1,28 @@
-name: Daily Bets
+name: Daily Bet Scraper
 
 on:
+  workflow_dispatch:   # ➜ nécessaire pour afficher “Run workflow”
   schedule:
-    - cron: "0 6 * * *"   # 6h UTC = 7h heure Paris
-  workflow_dispatch:      # permet lancement manuel
+    - cron: "0 6 * * *"   # exécution automatique à 6h UTC (7h Paris en hiver)
 
 jobs:
-  run-bot:
+  run-daily:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: "18"
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: npm install
 
       - name: Run daily script
+        run: npm run daily
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TZ: "Europe/Paris"
-        run: node src/dailyRun.js
