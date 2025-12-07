@@ -1,31 +1,29 @@
-name: Daily Pronosoft -> Telegram
+name: Daily Bets
 
 on:
   schedule:
-    # 07:00 Europe/Paris -> converti en UTC. Pour Paris CET/CEST variable selon saison.
-    # Simpler: run at 06:00 UTC which equals 07:00 CET (winter). If you want always 07:00 Paris regardless DST, use cron + TZ action.
-    - cron: '0 6 * * *'
-  workflow_dispatch:
+    - cron: "0 6 * * *"   # 6h UTC = 7h heure Paris
+  workflow_dispatch:      # permet lancement manuel
 
 jobs:
-  run-daily:
+  run-bot:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: 18
 
-      - name: Install deps
-        run: npm ci
+      - name: Install dependencies
+        run: npm install
 
       - name: Run daily script
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TZ: ${{ secrets.TZ }}
-        run: npm run daily
+          TZ: "Europe/Paris"
+        run: node src/dailyRun.js
