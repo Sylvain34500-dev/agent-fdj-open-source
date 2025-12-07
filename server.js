@@ -4,17 +4,13 @@ import TelegramBot from "node-telegram-bot-api";
 
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const URL = process.env.RENDER_EXTERNAL_URL; 
-// ex: https://agent-fdj-open-source.onrender.com
-
 const PORT = process.env.PORT || 10000;
 
 const app = express();
 app.use(bodyParser.json());
 
-// --- MODE WEBHOOK ---
+// --- INIT BOT EN MODE WEBHOOK ---
 const bot = new TelegramBot(TOKEN, { webHook: true });
-
-// URL COMPLETE DU WEBHOOK : https://TON-DOMAIN/webhook/TOKEN
 bot.setWebHook(`${URL}/webhook/${TOKEN}`);
 
 console.log("Webhook registered:", `${URL}/webhook/${TOKEN}`);
@@ -25,12 +21,13 @@ app.post(`/webhook/${TOKEN}`, (req, res) => {
     res.sendStatus(200);
 });
 
-// --- COMMANDE /bets ---
+// --- COMMANDE TG /bets ---
 bot.onText(/\/bets/, (msg) => {
     bot.sendMessage(msg.chat.id, "Voici les paris du jour !");
 });
 
-// --- LANCEMENT DU SERVEUR ---
+// --- LANCEMENT SERVEUR ---
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
