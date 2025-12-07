@@ -1,14 +1,20 @@
-import axios from "axios";
+// src/telegram.js
+const axios = require("axios");
 
-const TOKEN = process.env.TELEGRAM_TOKEN;
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
-export async function sendTelegramMessage(text) {
-  const url = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
-
-  await axios.post(url, {
-    chat_id: CHAT_ID,
-    text,
-    parse_mode: "Markdown"
-  });
+async function sendTelegramMessage(token, chatId, text) {
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+  try {
+    const res = await axios.post(url, {
+      chat_id: chatId,
+      text,
+      parse_mode: "HTML",
+      disable_web_page_preview: true
+    }, { timeout: 15000 });
+    return res.data;
+  } catch (err) {
+    console.error("Telegram send error:", err && err.response && err.response.data || err.message);
+    throw err;
+  }
 }
+
+module.exports = { sendTelegramMessage };
