@@ -3,7 +3,7 @@ import bodyParser from "body-parser";
 import TelegramBot from "node-telegram-bot-api";
 
 const TOKEN = process.env.TELEGRAM_TOKEN;
-const URL = process.env.RENDER_EXTERNAL_URL;  // Ex : https://agent-fdj-open-source.onrender.com
+const URL = process.env.RENDER_EXTERNAL_URL;
 const PORT = process.env.PORT || 10000;
 
 const app = express();
@@ -11,24 +11,25 @@ app.use(bodyParser.json());
 
 // --- MODE WEBHOOK ---
 const bot = new TelegramBot(TOKEN, { webHook: true });
+bot.setWebHook(`${URL}/webhook/${TOKEN}`);
 
-// URL complète du webhook
-const webhookPath = `/webhook/${TOKEN}`;
-const webhookUrl = `${URL}${webhookPath}`;
-
-bot.setWebHook(webhookUrl);
-
-console.log("Webhook registered:", webhookUrl);
+console.log("Webhook registered:", `${URL}/webhook/${TOKEN}`);
 
 // --- ROUTE WEBHOOK ---
-app.post(webhookPath, (req, res) => {
+app.post(`/webhook/${TOKEN}`, (req, res) => {
     bot.processUpdate(req.body);
     res.sendStatus(200);
 });
 
-// --- COMMANDE /bets ---
-bot.onText(/\/bets/, (msg) => {
-    bot.sendMessage(msg.chat.id, "Voici les paris du jour !");
+// --- COMMANDES ---
+bot.on("message", (msg) => {
+    const text = msg.text?.trim();
+    if (!text) return;
+
+    // Commande /bets
+    if (text.startsWith("/bets")) {
+        bot.sendMessage(msg.chat.id, "Voici les paris du jour !");
+    }
 });
 
 // --- LANCEMENT SERVEUR ---
