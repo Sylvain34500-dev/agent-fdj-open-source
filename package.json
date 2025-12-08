@@ -2,12 +2,12 @@
   "name": "agent-fdj-open-source",
   "version": "1.0.0",
   "type": "commonjs",
-  "main": "server.js",
+  "main": "server.cjs",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "daily": "node src/fetch_and_score.js",
-    "report": "node src/daily_report.js"
+    "start": "node server.cjs",
+    "dev": "nodemon server.cjs",
+    "generate": "node fetch_and_score.cjs && node index.cjs",
+    "daily": "node send_daily_report.cjs"
   },
   "dependencies": {
     "axios": "^1.4.0",
