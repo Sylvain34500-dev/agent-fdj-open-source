@@ -1,24 +1,25 @@
 {
   "name": "agent-fdj-open-source",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
-  "main": "server.js",
+
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "generate": "node fetch_and_score.js && node index.js",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "generate": "node src/fetch_and_score.js && node src/index.js",
     "daily": "node src/dailyRun.js"
   },
+
   "dependencies": {
-    "axios": "^1.7.7",
-    "body-parser": "^1.20.3",
+    "axios": "^1.6.7",
     "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.4.5",
-    "express": "^4.21.0",
-    "node-telegram-bot-api": "^0.63.0",
-    "undici": "^6.6.2"
+    "express": "^4.18.2",
+    "node-telegram-bot-api": "^0.61.0",
+    "undici": "^6.11.1"
   },
+
   "devDependencies": {
-    "nodemon": "^3.1.5"
+    "nodemon": "^3.0.1"
   }
 }
