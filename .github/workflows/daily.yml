@@ -1,9 +1,9 @@
-name: Daily Bet Scraper
+name: Daily FDJ Fetch
 
 on:
-  workflow_dispatch:   # ➜ nécessaire pour afficher “Run workflow”
   schedule:
-    - cron: "0 6 * * *"   # exécution automatique à 6h UTC (7h Paris en hiver)
+    - cron: "0 8 * * *"   # Tous les jours à 8h (heure UTC)
+  workflow_dispatch:      # Permet de lancer manuellement
 
 jobs:
   run-daily:
@@ -16,13 +16,13 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: "18"
+          node-version: '18'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm install
 
-      - name: Run daily script
-        run: npm run daily
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      - name: Run daily fetch
+        run: |
+          echo "TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" >> .env
+          echo "TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}" >> .env
+          node src/fetch_and_score.js
