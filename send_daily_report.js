@@ -1,46 +1,30 @@
-// send_daily_report.js (ESM FIX)
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import TelegramBot from "node-telegram-bot-api";
+import fs from "fs";
+import dotenv from "dotenv";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+dotenv.config();
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const token = process.env.TELEGRAM_TOKEN;
+const chatId = process.env.TELEGRAM_CHAT_ID;
 
-if (!BOT_TOKEN || !CHAT_ID) {
-  console.error("⚠️ TELEGRAM_BOT_TOKEN ou TELEGRAM_CHAT_ID non défini !");
-  process.exit(1);
-}
+async function sendReport() {
+  if (!fs.existsSync("results.json")) {
+    console.log("No results.json found! Run fetch first.");
+    return;
+  }
 
-const reportFile = path.join(__dirname, "picks.json");
-let report = null;
+  const data = JSON.parse(fs.readFileSync("results.json", "utf8"));
 
-try {
-  report = JSON.parse(fs.readFileSync(reportFile, "utf8"));
-} catch (e) {
-  console.error("⚠️ Impossible de lire picks.json :", e);
-  process.exit(1);
-}
-
-let text = `📊 *Pronostics du jour* 💰\n`;
-text += `_Généré: ${new Date().toLocaleString('fr-FR')}_\n\n`;
-
-if (!report.top || report.top.length === 0) {
-  text += "_Aucune donnée disponible._\n";
-} else {
-  report.top.slice(0, 10).forEach((m, idx) => {
-    text += `*${idx + 1}.* ${m.home} vs ${m.away}\n`;
-    text += `➡️ Pronostic: *${m.pickSide}*\n`;
-    text += `➡️ Meilleure cote: ${m.bestOdd}\n\n`;
+  let message = "📊 *Rapport FDJ du jour:*\n\n";
+  data.slice(0, 10).forEach(d => {
+    message += `• Numéro ${d.number}: ${d.frequency} tirages\n`;
   });
+
+  const bot = new TelegramBot(token, { polling: false });
+
+  await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
+  console.log("Message sent to Telegram!");
 }
 
-const bot = new TelegramBot(BOT_TOKEN, { polling: false });
-
-bot.sendMessage(CHAT_ID, text, { parse_mode: "Markdown" })
-  .then(() => console.log("✔️ Message envoyé sur Telegram"))
-  .catch(err => console.error("❌ Erreur Telegram:", err));
+sendReport();
 
