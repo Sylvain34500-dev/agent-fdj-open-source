@@ -1,4 +1,4 @@
-// fetch_and_score.js (ESM FIX)
+// fetch_and_score.js  (ESM FIX)
 import fetch from "node-fetch";
 import cheerio from "cheerio";
 import fs from "fs";
@@ -14,7 +14,7 @@ const OUT2 = path.join(__dirname, "picks_full.json");
 const PRONOS_URL = "https://pronosoft.com/fr/parions_sport/";
 
 async function fetchHtml(url) {
-  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" }});
+  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
   if (!res.ok) throw new Error("HTTP " + res.status);
   return await res.text();
 }
@@ -29,7 +29,12 @@ function parseMatches(html) {
       const home = cheerio(tds[0]).text().trim();
       const away = cheerio(tds[1]).text().trim();
       const maybeOdds = cheerio(tds[2]).text().trim().match(/(\d+[\.,]\d+)/g) || [];
-      matches.push({ home, away, odds: (maybeOdds||[]).map(s => Number(s.replace(",", "."))), source: "pronosoft" });
+      matches.push({
+        home,
+        away,
+        odds: maybeOdds.map(s => Number(s.replace(",", "."))),
+        source: "pronosoft"
+      });
     }
   });
 
@@ -42,18 +47,35 @@ async function main() {
   const matches = parseMatches(html);
 
   console.log("🔎 Found matches:", matches.length);
-  fs.writeFileSync(OUT2, JSON.stringify({ fetchedAt: new Date().toISOString(), url: PRONOS_URL, matches }, null, 2));
-  
+
+  fs.writeFileSync(
+    OUT2,
+    JSON.stringify({ fetchedAt: new Date().toISOString(), url: PRONOS_URL, matches }, null, 2)
+  );
+
   const top = matches
     .map(m => {
       const bestOdd = m.odds && m.odds.length ? Math.max(...m.odds) : null;
-      const pickSide = bestOdd ? (bestOdd === m.odds[0] ? "home" : bestOdd === m.odds[1] ? "away" : "other") : "unknown";
+      const pickSide = bestOdd
+        ? bestOdd === m.odds[0]
+          ? "home"
+          : bestOdd === m.odds[1]
+            ? "away"
+            : "other"
+        : "unknown";
       return { ...m, bestOdd, pickSide };
     })
-    .sort((a,b) => (b.bestOdd||0) - (a.bestOdd||0));
+    .sort((a, b) => (b.bestOdd || 0) - (a.bestOdd || 0));
 
-  fs.writeFileSync(OUT1, JSON.stringify({ generatedAt: new Date().toISOString(), top }, null, 2));
+  fs.writeFileSync(
+    OUT1,
+    JSON.stringify({ generatedAt: new Date().toISOString(), top }, null, 2)
+  );
+
   console.log("✅ Picks written.");
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch(e => {
+  console.error(e);
+  process.exit(1);
+});
