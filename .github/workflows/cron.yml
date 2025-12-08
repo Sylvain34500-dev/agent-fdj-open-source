@@ -1,33 +1,29 @@
-name: Auto fetch & deploy
+name: Daily FDJ Fetch & Score
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *"   # toutes les 30 minutes
-  workflow_dispatch:         # pour lancer manuellement
+    - cron: "0 6 * * *"
 
 jobs:
-  run-scraper:
+  run:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
 
-      - name: Install deps
-        run: npm ci
+    - name: Install deps
+      run: npm install
 
-      - name: Run scraper (fetch_and_score)
-        env:
-          NODE_OPTIONS: --max-old-space-size=512
-        run: |
-          node fetch_and_score.js
+    - name: Create .env
+      run: |
+        echo TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }} >> .env
+        echo TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }} >> .env
 
-      - name: Call Render deploy hook (if provided)
-        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
-        run: |
-          echo "Calling Render deploy hook..."
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+    - name: Run FDJ scoring
+      run: node fetch_and_score.cjs
