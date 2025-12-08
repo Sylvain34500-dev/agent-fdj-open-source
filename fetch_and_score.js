@@ -1,29 +1,48 @@
-import axios from "axios";
-import * as cheerio from "cheerio";
-import fs from "fs";
+// Fix fetch missing File object (patch Undici)
+globalThis.File = class File {};
 
-async function fetchData() {
-  const res = await axios.get("https://www.pronosoft.com/fr/loto/statistiques/");
-  const html = res.data;
+// Import fetch from undici
+import { fetch } from "undici";
 
-  // Cheerio ESM fix ⬇️
-  const $ = cheerio.load(html);
+// Telegram
+import TelegramBot from "node-telegram-bot-api";
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: false });
 
-  // Exemple de récupération de données
-  let results = [];
+// -------------------
+//  Fetch FDJ API
+// -------------------
+const url = "https://www.fdj.fr/api/game-services...";  // <-- mets ton URL ici
 
-  $("table tbody tr").each((i, row) => {
-    const cols = $(row).find("td");
-    results.push({
-      number: $(cols[0]).text().trim(),
-      frequency: $(cols[1]).text().trim()
-    });
-  });
+async function getScore() {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Erreur api fdj");
+  const data = await res.json();
 
-  console.log("DATA SCRAPED:", results);
+  // Exemple d'extraction du score (adapter selon ta réponse réelle)
+  const score = data?.score ?? "Pas disponible";
 
-  // Save to JSON
-  fs.writeFileSync("results.json", JSON.stringify(results, null, 2));
+  return score;
 }
 
-fetchData().catch(err => console.error("ERROR:", err));
+// --------------------
+// Send Telegram message
+// --------------------
+async function run() {
+  try {
+    const score = await getScore();
+
+    const msg = `📊 Rapport FDJ du jour :
+Score du jour: ${score}
+Envoyé automatiquement 🚀`;
+
+    await bot.sendMessage(TELEGRAM_CHAT_ID, msg);
+    console.log("Message Telegram envoyé.");
+  } catch (err) {
+    console.error("Erreur:", err);
+    await bot.sendMessage(TELEGRAM_CHAT_ID, "❌ Erreur FDJ\n" + err.message);
+  }
+}
+
+run();
