@@ -2,7 +2,7 @@ name: Send Daily Telegram Report
 
 on:
   schedule:
-    - cron: "0 7 * * *" # 07:00 UTC = 08:00 France
+    - cron: "0 7 * * *"   # 07:00 UTC
   workflow_dispatch:
 
 jobs:
