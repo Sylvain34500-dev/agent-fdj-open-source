@@ -1,0 +1,31 @@
+name: send-report
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * *"   # tous les jours à 08:00
+
+jobs:
+  send-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run daily score fetch
+        run: node fetch_and_score.js
+
+      - name: Send Telegram message
+        run: node send_daily_report.js
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
