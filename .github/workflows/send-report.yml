@@ -2,7 +2,7 @@ name: Send Daily Telegram Report
 
 on:
   schedule:
-    - cron: "0 8 * * *"   # 08:00 CET
+    - cron: "0 7 * * *"       # tous les jours à 07:00 (Paris)
   workflow_dispatch:
 
 jobs:
@@ -10,22 +10,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: "18"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
 
-    - name: Run daily data fetch
-      run: node fetch_and_score.js
-
-    - name: Send Telegram message
-      env:
-        TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      run: node send_report.js
+      - name: Run daily data fetch
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node fetch_and_score.js
