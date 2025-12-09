@@ -1,15 +1,14 @@
 name: daily-picks
 
-# Cron runs in UTC. Paris = UTC+1 (winter) -> 06:00 UTC = 07:00 CET.
-# NOTE DST: adjust cron if needed (in summer Paris=UTC+2 -> set to 05:00 UTC if you want 07:00 local).
 on:
   schedule:
-    - cron: '0 6 * * *'   # every day at 06:00 UTC => 07:00 Paris (winter)
+    - cron: '0 6 * * *'
   workflow_dispatch: {}
 
 jobs:
   build-and-generate:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -22,12 +21,12 @@ jobs:
           node-version: 18
 
       - name: Install deps
-        run: npm ci
+        run: npm install
 
       - name: Run scraper & generator
         run: |
-          node fetch_and_score.js
-          node index.js
+          node fetch_and_score.cjs
+          node index.cjs
 
       - name: Commit daily_bets if changed
         run: |
