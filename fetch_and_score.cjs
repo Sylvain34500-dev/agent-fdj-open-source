@@ -1,6 +1,5 @@
 // fetch_and_score.cjs
 // CommonJS version — safe for GitHub Actions & Render
-
 const axios = require('axios');
 const cheerio = require('cheerio');
 const fs = require('fs');
@@ -42,7 +41,6 @@ function parseMatches(html) {
 
   // If nothing found, try some other blocks
   if (!matches.length) {
-    // generic selectors fallback
     $('div.ticket, div.match, li.match-item').each((i, el) => {
       try {
         const block = $(el);
@@ -54,7 +52,7 @@ function parseMatches(html) {
           if (/^\d+(\.\d+)?$/.test(t)) odds.push(Number(t));
         });
         if ((home || away) && odds.length) matches.push({ home, away, odds, source: 'pronosoft' });
-      } catch (err) { /* ignore single block errors */ }
+      } catch (err) { /* ignore */ }
     });
   }
 
@@ -73,21 +71,28 @@ function produceTop(matches) {
 
 async function main() {
   try {
-    console.log('📥 Fetching pronosoft...');
+    console.log('📥 Fetching pronosoft...', PRONOS_URL);
     const html = await fetchHtml(PRONOS_URL);
     const matches = parseMatches(html);
     console.log('🔎 Found matches:', matches.length);
 
+    // write raw + debug
     fs.writeFileSync(OUT2, JSON.stringify({ fetchedAt: new Date().toISOString(), url: PRONOS_URL, matches }, null, 2));
     const top = produceTop(matches);
     fs.writeFileSync(OUT1, JSON.stringify({ generatedAt: new Date().toISOString(), top }, null, 2));
 
     console.log('✅ Picks written to', OUT1, OUT2);
+    // Debug printing for Render logs
+    console.log('--- debug: top (first 10) ---');
+    console.log(JSON.stringify(top.slice(0,10), null, 2));
+    console.log('-----------------------------');
+
     process.exit(0);
   } catch (err) {
-    console.error('❌ fetch_and_score error:', err && err.message ? err.message : err);
+    console.error('❌ fetch_and_score error:', (err && err.stack) ? err.stack : err);
     process.exit(1);
   }
 }
 
 if (require.main === module) main();
+
