@@ -32,7 +32,6 @@ async function handleUpdate(update) {
 
     const text = msg.text.trim();
     const chatId = msg.chat?.id || msg.from?.id;
-
     if (!chatId) return;
 
     if (text.startsWith("/bets")) {
@@ -84,7 +83,6 @@ app.post(`/webhook/${TELEGRAM_TOKEN}`, (req, res) => {
 });
 
 // MANUAL SEND ==============================================================
-// Permet d'envoyer immédiatement le rapport Telegram
 app.get("/manual-send", async (req, res) => {
   const scriptPath = path.join(__dirname, "send_daily_report.cjs");
 
@@ -98,7 +96,13 @@ app.get("/manual-send", async (req, res) => {
       console.error("⚠️ ERREUR MANUAL_SEND:", error);
       return res.status(500).send("❌ Erreur lors de l'envoi manuel (logs Render).");
     }
-    console.log("📤 Rapport envoyé manuellement !");
+
+    // TEST DEBUG PARSING LOGS RENDER
+    console.log("--------- 🧪 PARSING DEBUG ---------");
+    console.log(stdout);
+    console.log("------------------------------------");
+
+    console.log("📤 Rapport envoyé !");
     res.send("📤 Rapport envoyé sur Telegram !");
   });
 });
