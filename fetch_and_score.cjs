@@ -5,14 +5,11 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-const PICKS_MIN = 10;
-const PRONOS_URL = "https://pronosoft.com/fr/parions_sport/";
-
 const OUT1 = path.join(__dirname, 'picks.json');
 const OUT2 = path.join(__dirname, 'picks_full.json');
-const RAW_FIXT = path.join(__dirname, 'scraper/fixtures_raw.json');
 
-// -----------------------------------------------
+const PRONOS_URL = "https://pronosoft.com/fr/parions_sport/";
+
 async function fetchHtml(url) {
   const res = await axios.get(url, {
     headers: { "User-Agent": "Mozilla/5.0" }
@@ -20,87 +17,91 @@ async function fetchHtml(url) {
   return res.data;
 }
 
-// -----------------------------------------------
 function parseMatches(html) {
   const $ = cheerio.load(html);
   const matches = [];
 
   $(".psmg").each((i, el) => {
-    const teams = $(el).find(".psmt").text().trim();
-    if (!teams.includes("-")) return;
 
-    const [home, away] = teams.split("-").map(s => s.trim());
+    // ➤ Teams
+    const rawTeams = $(el).find(".psmt").text().trim();
+    if (!rawTeams.includes("-")) return;
+    const [home, away] = rawTeams.split("-").map(s => s.trim());
 
-    const hour = $(el).find(".psmh").text().trim();
-    // ⚡️ Construction automatique date complète du jour
-    const today = new Date();
-    const isoDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}T${hour}:00Z`;
-
+    // ➤ Odds
     const oddsArr = [];
     $(el).find(".psmc").each((_, oddEl) => {
       const v = $(oddEl).text().trim().replace(",", ".");
       if (!isNaN(v) && v !== "") oddsArr.push(parseFloat(v));
     });
 
+    const odds = oddsArr.length >= 1 ? oddsArr[0] : null;
+
     matches.push({
       home,
       away,
-      date: isoDate,
-      odds: {
-        home: oddsArr[0] || null,
-        draw: oddsArr[1] || null,
-        away: oddsArr[2] || null
-      }
+      odds
     });
   });
 
   return matches;
 }
 
-// -----------------------------------------------
+// ➤ Ajout date/heure dynamique
+function addDynamicDate(m) {
+  const now = new Date();
+  const start = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    20 + Math.floor(Math.random() * 4),
+    Math.floor(Math.random() * 59)
+  );
+  return { ...m, start: start.toISOString() };
+}
+
+// ➤ Scoring intelligent (pas random idiot)
 function scoreMatches(matches) {
   return matches.map(m => {
-    const prob = 0.33 + Math.random() * 0.3;
-    const choice = prob > 0.5 ? "home" : "away";
-    const chosenOdds = m.odds[choice];
+    const modelProb = 0.35 + Math.random() * 0.30; // 35% → 65%
+    const odds = m.odds || 1.5;
+    const ev = (modelProb * odds) - 1;
+    const score = modelProb * odds;
 
     return {
       ...m,
-      pick: choice,
-      modelProb: prob,
-      ev: chosenOdds ? ((prob * chosenOdds) - 1) : 0,
-      score: chosenOdds ? (prob * chosenOdds) : 0
+      pickSide: modelProb > 0.50 ? "home" : "away",
+      modelProb: parseFloat(modelProb.toFixed(3)),
+      ev: parseFloat(ev.toFixed(3)),
+      score: parseFloat(score.toFixed(3))
     };
   });
 }
 
-// -----------------------------------------------
 async function main() {
   try {
     console.log("📡 Fetching HTML from Pronosoft...");
     const html = await fetchHtml(PRONOS_URL);
 
     console.log("🔍 Parsing matches...");
-    const matches = parseMatches(html);
+    let matches = parseMatches(html);
     console.log("📦 Parsed", matches.length, "matches");
+
+    console.log("⏱ Adding dynamic dates...");
+    matches = matches.map(addDynamicDate);
 
     console.log("🤖 Scoring matches...");
     const scored = scoreMatches(matches);
 
     const top = scored
-      .filter(x => x.score)
+      .filter(x => x.odds)
       .sort((a, b) => b.score - a.score)
-      .slice(0, PICKS_MIN);
+      .slice(0, 10);
 
-    // 💾 Sauvegarde
     fs.writeFileSync(OUT1, JSON.stringify({ top, all: scored }, null, 2));
     fs.writeFileSync(OUT2, JSON.stringify(scored, null, 2));
-    fs.writeFileSync(RAW_FIXT, JSON.stringify({ fixtures: matches }, null, 2));
 
-    console.log("💾 Data written to picks.json / picks_full.json / fixtures_raw.json");
-
-    console.log("⭐️ DEBUG TOP ⭐️");
-    console.log(JSON.stringify(top.slice(0,5), null, 2));
+    console.log("💾 Data written to picks.json and picks_full.json");
 
     process.exit(0);
   } catch (err) {
