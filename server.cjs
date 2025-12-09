@@ -6,6 +6,7 @@ const path = require("path");
 const fs = require("fs");
 const axios = require("axios");
 const TelegramBot = require("node-telegram-bot-api");
+const { exec } = require("child_process");   // <-- ajouté
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TOKEN;
 const BOT_URL = process.env.RENDER_EXTERNAL_URL || process.env.BOT_URL; // Use Render variable or BOT_URL
@@ -82,6 +83,19 @@ app.post(`/webhook/${TELEGRAM_TOKEN}`, (req, res) => {
   }
 });
 
+// ==================== ENVOI MANUEL DU RAPPORT ====================
+// Permet d'envoyer immédiatement le rapport Telegram
+app.get("/manual-send", async (req, res) => {
+  exec("node send_daily_report.cjs", (error, stdout, stderr) => {
+    if (error) {
+      console.error("⚠️ ERREUR MANUAL_SEND:", error);
+      return res.status(500).send("Erreur lors de l'envoi manuel.");
+    }
+    console.log("📤 Rapport envoyé manuellement !");
+    res.send("📤 Rapport envoyé manuellement !");
+  });
+});
+
 // run-cron endpoint (optionnel) : appelé par GH Action -> peut trigger redeploy
 app.get("/run-cron", async (req, res) => {
   try {
@@ -98,6 +112,7 @@ app.get("/run-cron", async (req, res) => {
   }
 });
 
+// affichage simple
 app.get("/", (req, res) => res.send("Bot Telegram OK - Render is running!"));
 
 const server = app.listen(PORT, async () => {
