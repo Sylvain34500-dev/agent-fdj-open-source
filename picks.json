@@ -8,12 +8,14 @@
       "modelProb": 0.58,
       "ev": 0.131,
       "score": 1.131,
-      "stakeFraction": 0.01415,
-      "stakeAmount": 14.15,
+      "stake_safe": 10.6,
+      "stake_conservative": 14.15,
+      "stake_aggressive": 42.45,
       "label": "WEAK_VALUE",
       "confidence": 41
     }
   ],
+
   "all": [
     {
       "matchId": "XXX-YYY-123",
@@ -23,8 +25,9 @@
       "modelProb": 0.58,
       "ev": 0.131,
       "score": 1.131,
-      "stakeFraction": 0.01415,
-      "stakeAmount": 14.15,
+      "stake_safe": 10.6,
+      "stake_conservative": 14.15,
+      "stake_aggressive": 42.45,
       "label": "WEAK_VALUE",
       "confidence": 41
     }
