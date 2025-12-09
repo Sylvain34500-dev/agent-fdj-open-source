@@ -1,56 +1,54 @@
-name: daily-picks
+const fs = require("fs");
+const path = require("path");
+const TelegramBot = require("node-telegram-bot-api");
 
-on:
-  schedule:
-    - cron: '0 6 * * *'
-  workflow_dispatch: {}
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
+const CHAT_ID = process.env.CHAT_ID;
+const PICKS_FILE = path.join(__dirname, "picks.json");
+const OUT_FILE = path.join(__dirname, "daily_bets.txt");
 
-jobs:
-  build-and-generate:
-    runs-on: ubuntu-latest
+function formatDailyBets(picksData) {
+  if (!picksData || !Array.isArray(picksData.top) || !picksData.top.length) {
+    return "⚠ Aucun pick disponible aujourd'hui.";
+  }
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+  const top = picksData.top.slice(0, 10);
+  let txt = "🎯 PARIS DU JOUR\n\n";
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
+  top.forEach((p, i) => {
+    const team = (p.pickSide === "home" ? p.home : p.pickSide === "away" ? p.away : (p.home + " vs " + p.away));
+    const odd = p.bestOdd ? p.bestOdd.toFixed(2) : "?";
+    txt += `${i+1}. ${team} — cote ${odd}\n`;
+    if (p.comment) txt += `   💬 ${p.comment}\n`;
+  });
 
-      - name: Install deps
-        run: npm install
+  txt += `\n🕒 ${new Date().toLocaleString("fr-FR")}`;
+  return txt;
+}
 
-      - name: Run scraper & generator
-        run: |
-          node fetch_and_score.cjs
-          node index.cjs
+async function run() {
+  if (!TELEGRAM_TOKEN || !CHAT_ID) {
+    console.error("❌ TOKEN ou CHAT_ID manquant");
+    return;
+  }
 
-      - name: Commit picks if changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [ -n "$(git status --porcelain)" ]; then
-            git add picks.json picks_full.json daily_bets.txt || true
-            git commit -m "auto: update picks/daily_bets (from GH Action)" || true
-            git push origin HEAD:main || true
-          else
-            echo "No changes"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  console.log("📁 Lecture fichier picks:", PICKS_FILE);
 
-      - name: Send Telegram Report
-        run: node send_daily_report.cjs
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+  if (!fs.existsSync(PICKS_FILE)) {
+    console.error("❌ ERREUR: picks.json introuvable");
+    return;
+  }
 
-      - name: Trigger Render redeploy (optional)
-        if: ${{ secrets.RENDER_DEPLOY_HOOK && secrets.RENDER_DEPLOY_HOOK != '' }}
-        env:
-          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
-        run: |
-          curl -X POST "$RENDER_DEPLOY_HOOK"
+  const picksData = JSON.parse(fs.readFileSync(PICKS_FILE, "utf8"));
+  const text = formatDailyBets(picksData);
+
+  fs.writeFileSync(OUT_FILE, text, "utf8");
+  console.log("📄 daily_bets.txt généré");
+
+  const bot = new TelegramBot(TELEGRAM_TOKEN);
+  await bot.sendMessage(CHAT_ID, text);
+
+  console.log("📤 Message Telegram envoyé !");
+}
+
+run();
