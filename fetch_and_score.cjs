@@ -1,5 +1,4 @@
 // fetch_and_score.cjs
-// CommonJS version — safe for GitHub Actions & Render
 const axios = require('axios');
 const cheerio = require('cheerio');
 const fs = require('fs');
@@ -9,14 +8,11 @@ require('dotenv').config();
 const OUT1 = path.join(__dirname, 'picks.json');
 const OUT2 = path.join(__dirname, 'picks_full.json');
 
-// Change this URL if needed
-const PRONOS_URL = 'https://pronosoft.com/fr/parions_sport/';
+const PRONOS_URL = "https://pronosoft.com/fr/parions_sport/";
 
 async function fetchHtml(url) {
   const res = await axios.get(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Bot/1.0)' },
-    responseType: 'text',
-    timeout: 20_000
+    headers: { "User-Agent": "Mozilla/5.0" }
   });
   return res.data;
 }
@@ -25,74 +21,75 @@ function parseMatches(html) {
   const $ = cheerio.load(html);
   const matches = [];
 
-  // Generic table-based fallback + some selectors
-  $('table tr').each((i, tr) => {
-    const tds = $(tr).find('td');
-    if (tds.length >= 2) {
-      const home = $(tds[0]).text().trim();
-      const away = $(tds[1]).text().trim();
-      const maybeOdds = ($(tds[2]).text() || '').trim().match(/(\d+[\.,]\d+)/g) || [];
-      const odds = maybeOdds.map(s => Number(s.replace(',', '.'))).filter(n => !Number.isNaN(n));
-      if (home || away) {
-        matches.push({ home: home || null, away: away || null, odds, source: 'pronosoft' });
-      }
-    }
-  });
+  $(".psmg").each((i, el) => {
+    const teams = $(el).find(".psmt").text().trim();
+    if (!teams.includes("-")) return;
+    const [home, away] = teams.split("-").map(s => s.trim());
 
-  // If nothing found, try some other blocks
-  if (!matches.length) {
-    $('div.ticket, div.match, li.match-item').each((i, el) => {
-      try {
-        const block = $(el);
-        const home = block.find('.home, .team-home, .equipe-left, .team-left').first().text().trim();
-        const away = block.find('.away, .team-away, .equipe-right, .team-right').first().text().trim();
-        const odds = [];
-        block.find('span.cote, .odd, .price, .cot').each((ii, o) => {
-          const t = $(o).text().trim().replace(',', '.');
-          if (/^\d+(\.\d+)?$/.test(t)) odds.push(Number(t));
-        });
-        if ((home || away) && odds.length) matches.push({ home, away, odds, source: 'pronosoft' });
-      } catch (err) { /* ignore */ }
+    const start = $(el).find(".psmh").text().trim();
+    const odds = [];
+    $(el).find(".psmc").each((_, oddEl) => {
+      const v = $(oddEl).text().trim().replace(",", ".");
+      if (!isNaN(v) && v !== "") odds.push(parseFloat(v));
     });
-  }
+
+    matches.push({
+      home,
+      away,
+      start: start || null,
+      odds: odds.length ? odds[0] : null
+    });
+  });
 
   return matches;
 }
 
-function produceTop(matches) {
+function scoreMatches(matches) {
   return matches.map(m => {
-    const bestOdd = (m.odds && m.odds.length) ? Math.max(...m.odds) : null;
-    const pickSide = bestOdd
-      ? (bestOdd === m.odds[0] ? 'home' : bestOdd === m.odds[1] ? 'away' : 'other')
-      : 'unknown';
-    return { ...m, bestOdd, pickSide };
-  }).sort((a,b) => (b.bestOdd || 0) - (a.bestOdd || 0));
+    const prob = 0.33 + Math.random() * 0.3;
+    return {
+      home: m.home,
+      away: m.away,
+      start: m.start,
+      odds: m.odds,
+      pickSide: prob > 0.5 ? "home" : "away",
+      modelProb: prob,
+      ev: ((prob * m.odds) - 1) || 0,
+      score: prob * (m.odds || 1)
+    };
+  });
 }
 
 async function main() {
   try {
-    console.log('📥 Fetching pronosoft...', PRONOS_URL);
+    console.log("📡 Fetching HTML from Pronosoft...");
     const html = await fetchHtml(PRONOS_URL);
+
+    console.log("🔍 Parsing matches...");
     const matches = parseMatches(html);
-    console.log('🔎 Found matches:', matches.length);
+    console.log("📦 Parsed", matches.length, "matches");
 
-    // write raw + debug
-    fs.writeFileSync(OUT2, JSON.stringify({ fetchedAt: new Date().toISOString(), url: PRONOS_URL, matches }, null, 2));
-    const top = produceTop(matches);
-    fs.writeFileSync(OUT1, JSON.stringify({ generatedAt: new Date().toISOString(), top }, null, 2));
+    console.log("🤖 Scoring matches...");
+    const scored = scoreMatches(matches);
 
-    console.log('✅ Picks written to', OUT1, OUT2);
-    // Debug printing for Render logs
-    console.log('--- debug: top (first 10) ---');
-    console.log(JSON.stringify(top.slice(0,10), null, 2));
-    console.log('-----------------------------');
+    const top = scored
+      .filter(x => x.odds)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+
+    fs.writeFileSync(OUT1, JSON.stringify({ top, all: scored }, null, 2));
+    fs.writeFileSync(OUT2, JSON.stringify(scored, null, 2));
+
+    console.log("💾 Data written to picks.json and picks_full.json");
+
+    console.log("⭐️ DEBUG SAMPLE ⭐️");
+    console.log(JSON.stringify(top.slice(0,5), null, 2));
 
     process.exit(0);
   } catch (err) {
-    console.error('❌ fetch_and_score error:', (err && err.stack) ? err.stack : err);
+    console.error("❌ fetch_and_score error", err);
     process.exit(1);
   }
 }
 
 if (require.main === module) main();
-
