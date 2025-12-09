@@ -1,0 +1,22 @@
+{
+  "fixtures": [
+    {
+      "home": "Team A",
+      "away": "Team B",
+      "odds": {
+        "home": 2.10,
+        "draw": 3.40,
+        "away": 3.60
+      }
+    },
+    {
+      "home": "Team C",
+      "away": "Team D",
+      "odds": {
+        "home": 1.95,
+        "draw": 3.20,
+        "away": 4.20
+      }
+    }
+  ]
+}
