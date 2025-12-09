@@ -3,52 +3,42 @@
     "matchId": "XXX-YYY-123",
     "start": "2025-02-27T21:47:00.000Z",
 
-    "odds": {
-      "home": 1.95,
-      "draw": 3.20,
-      "away": 3.80
-    },
+    "odds": { "home": 1.95, "draw": 3.20, "away": 3.80 },
 
-    "modelProb": {
-      "home": 0.58,
-      "draw": 0.21,
-      "away": 0.21
-    },
+    "modelProb": { "home": 0.58, "draw": 0.21, "away": 0.21 },
 
-    "ev": {
-      "home": 0.131,
-      "draw": -0.33,
-      "away": -0.20
-    },
+    "ev": { "home": 0.131, "draw": -0.33, "away": -0.20 },
 
-    "score": {
-      "home": 1.131,
-      "draw": 0.21,
-      "away": 0.40
-    },
+    "score": { "home": 1.131, "draw": 0.21, "away": 0.40 },
 
     "kelly": {
-      "home": {
-        "full": 0.138,
-        "half": 0.069,
-        "quarter": 0.034
-      },
-      "draw": {
-        "full": 0,
-        "half": 0,
-        "quarter": 0
-      },
-      "away": {
-        "full": 0,
-        "half": 0,
-        "quarter": 0
-      }
+      "home": { "full": 0.1379, "half": 0.0690, "quarter": 0.0345 },
+      "draw": { "full": 0, "half": 0, "quarter": 0 },
+      "away": { "full": 0, "half": 0, "quarter": 0 }
+    },
+
+    "confidence": 41,
+
+    "kelly_adjusted": {
+      "raw": 0.1379,
+      "adjusted_by_confidence": 0.0566,
+      "safety_kelly_factor": 0.25,
+      "safe_kelly_fraction": 0.01415
+    },
+
+    "stake": {
+      "fraction_of_bankroll": 0.01415,
+      "amount_eur": 14.15
     },
 
     "recommended": {
       "side": "home",
-      "stakeFraction": 0.034,
-      "reason": "Positive EV + Kelly confirmé"
-    }
+      "stakeFraction_conservative": 0.01415,
+      "stakeFraction_aggressive": 0.0345,
+      "reason": "Positive EV + raw Kelly; adjusted by confidence => conservative stake"
+    },
+
+    "label": "WEAK_VALUE"
   }
 ]
+
