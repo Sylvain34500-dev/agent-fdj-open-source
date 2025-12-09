@@ -1,55 +1,56 @@
-// send_daily_report.cjs
-const fs = require('fs');
-const path = require('path');
-const TelegramBot = require('node-telegram-bot-api');
-require('dotenv').config();
+name: daily-picks
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TOKEN;
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_CHATID || process.env.TELEGRAM_CHAT;
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch: {}
 
-if (!BOT_TOKEN || !CHAT_ID) {
-  console.error('❌ TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not provided in env.');
-  process.exit(1);
-}
+jobs:
+  build-and-generate:
+    runs-on: ubuntu-latest
 
-const reportPath = path.join(__dirname, 'picks.json');
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-if (!fs.existsSync(reportPath)) {
-  console.error('❌ picks.json not found. Run fetch_and_score.cjs first.');
-  process.exit(1);
-}
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
-let report = null;
-try {
-  report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
-} catch (err) {
-  console.error('❌ Cannot parse picks.json:', err.message || err);
-  process.exit(1);
-}
+      - name: Install deps
+        run: npm install
 
-const top = report.top || [];
-let message = `📊 *Pronostics du jour*\n_${new Date().toLocaleString('fr-FR')}_\n\n`;
+      - name: Run scraper & generator
+        run: |
+          node fetch_and_score.cjs
+          node index.cjs
 
-if (!top.length) {
-  message += '_Aucun pick disponible._\n';
-} else {
-  top.slice(0, 8).forEach((m, i) => {
-    const home = m.home || 'Home';
-    const away = m.away || 'Away';
-    const pick = (m.pickSide || m.pick || 'unknown').toUpperCase();
-    const bestOdd = m.bestOdd != null ? m.bestOdd : 'N/A';
-    message += `*${i+1}.* ${home} vs ${away}\n➡️ PICK: *${pick}* — Cote: ${bestOdd}\n\n`;
-  });
-}
+      - name: Commit picks if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add picks.json picks_full.json daily_bets.txt || true
+            git commit -m "auto: update picks/daily_bets (from GH Action)" || true
+            git push origin HEAD:main || true
+          else
+            echo "No changes"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-const bot = new TelegramBot(BOT_TOKEN, { polling: false });
+      - name: Send Telegram Report
+        run: node send_daily_report.cjs
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
-bot.sendMessage(CHAT_ID, message, { parse_mode: 'Markdown' })
-  .then(() => {
-    console.log('✔️ Report sent to Telegram');
-    process.exit(0);
-  })
-  .catch(err => {
-    console.error('❌ Telegram send error:', err && err.message ? err.message : err);
-    process.exit(1);
-  });
+      - name: Trigger Render redeploy (optional)
+        if: ${{ secrets.RENDER_DEPLOY_HOOK && secrets.RENDER_DEPLOY_HOOK != '' }}
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          curl -X POST "$RENDER_DEPLOY_HOOK"
