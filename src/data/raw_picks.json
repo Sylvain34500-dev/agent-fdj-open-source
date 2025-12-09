@@ -1,0 +1,9 @@
+[
+  {
+    "matchId": "XXX-YYY-123",
+    "start": "2025-02-27T21:47:00.000Z",
+    "odds": { "home": 1.95, "draw": 3.20, "away": 3.80 },
+    "modelProb": { "home": 0.58, "draw": 0.21, "away": 0.21 },
+    "confidence": 41
+  }
+]
