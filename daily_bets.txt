@@ -1,11 +1,22 @@
-🎯 PARIS DU JOUR – Agent Automatisé
+function parseBets(raw) {
+  const lines = raw.split('\n');
 
-🔥 5 PARIS SIMPLES FIABLES
-• Equipe B (1N2) — cote 1.85
-• Equipe A (1N2) — cote 4.2
-• Nul (1N2) — cote 3.1
+  const bets = [];
 
+  for (const line of lines) {
+    if (line.includes('cote')) {
+      // ex: "• Equipe B (1N2) – cote 1.85"
+      const clean = line.replace(/•/g, '').trim();
 
-🛡️ COMBINÉS SÉCURISÉS
-1️⃣ 
-2️⃣ 
+      // Séparer : description vs cote
+      const parts = clean.split('cote');
+
+      const description = parts[0].trim().replace(/[-–]/g, '').trim();
+      const odds = parts[1]?.trim();
+
+      bets.push({ description, odds });
+    }
+  }
+
+  return bets;
+}
