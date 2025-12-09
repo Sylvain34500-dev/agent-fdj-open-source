@@ -86,13 +86,20 @@ app.post(`/webhook/${TELEGRAM_TOKEN}`, (req, res) => {
 // MANUAL SEND ==============================================================
 // Permet d'envoyer immédiatement le rapport Telegram
 app.get("/manual-send", async (req, res) => {
-  exec("node send_daily_report.cjs", (error) => {
+  const scriptPath = path.join(__dirname, "send_daily_report.cjs");
+
+  if (!fs.existsSync(scriptPath)) {
+    console.error("send_daily_report.cjs introuvable !");
+    return res.status(500).send("❌ Script send_daily_report.cjs introuvable.");
+  }
+
+  exec(`node ${scriptPath}`, (error, stdout, stderr) => {
     if (error) {
       console.error("⚠️ ERREUR MANUAL_SEND:", error);
-      return res.status(500).send("Erreur lors de l'envoi manuel.");
+      return res.status(500).send("❌ Erreur lors de l'envoi manuel (logs Render).");
     }
     console.log("📤 Rapport envoyé manuellement !");
-    res.send("📤 Rapport envoyé manuellement !");
+    res.send("📤 Rapport envoyé sur Telegram !");
   });
 });
 
@@ -119,8 +126,4 @@ const server = app.listen(PORT, async () => {
 });
 
 module.exports = server;
-
-
-module.exports = server;
-
 
