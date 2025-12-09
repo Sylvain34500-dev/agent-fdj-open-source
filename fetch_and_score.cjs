@@ -1,12 +1,12 @@
 // fetch_and_score.cjs
-const axios = require('axios');
-const cheerio = require('cheerio');
-const fs = require('fs');
-const path = require('path');
-require('dotenv').config();
+const axios = require("axios");
+const cheerio = require("cheerio");
+const fs = require("fs");
+const path = require("path");
+require("dotenv").config();
 
-const OUT1 = path.join(__dirname, 'picks.json');
-const OUT2 = path.join(__dirname, 'picks_full.json');
+const OUT1 = path.join(__dirname, "picks.json");
+const OUT2 = path.join(__dirname, "picks_full.json");
 
 const PRONOS_URL = "https://pronosoft.com/fr/parions_sport/";
 
@@ -17,25 +17,25 @@ async function fetchHtml(url) {
   return res.data;
 }
 
+/******************************
+ * PARSING CORRECT
+ ******************************/
 function parseMatches(html) {
   const $ = cheerio.load(html);
   const matches = [];
 
-  $(".psmg").each((i, el) => {
+  $("tr.psm").each((i, row) => {
+    const teams = $(row).find(".psmt").text().trim();
+    if (!teams.includes("-")) return;
+    const [home, away] = teams.split("-").map(s => s.trim());
 
-    // ➤ Teams
-    const rawTeams = $(el).find(".psmt").text().trim();
-    if (!rawTeams.includes("-")) return;
-    const [home, away] = rawTeams.split("-").map(s => s.trim());
-
-    // ➤ Odds
     const oddsArr = [];
-    $(el).find(".psmc").each((_, oddEl) => {
-      const v = $(oddEl).text().trim().replace(",", ".");
+    $(row).find(".psmc").each((_, cell) => {
+      const v = $(cell).text().trim().replace(",", ".");
       if (!isNaN(v) && v !== "") oddsArr.push(parseFloat(v));
     });
 
-    const odds = oddsArr.length >= 1 ? oddsArr[0] : null;
+    const odds = oddsArr.length ? oddsArr[0] : null;
 
     matches.push({
       home,
@@ -47,7 +47,9 @@ function parseMatches(html) {
   return matches;
 }
 
-// ➤ Ajout date/heure dynamique
+/******************************
+ * DATE DYNAMIQUE
+ ******************************/
 function addDynamicDate(m) {
   const now = new Date();
   const start = new Date(
@@ -60,57 +62,32 @@ function addDynamicDate(m) {
   return { ...m, start: start.toISOString() };
 }
 
-// 🔥 NIVEAU 3 — Scoring PRO Betting
+/******************************
+ * SCORING
+ ******************************/
 function scoreMatches(matches) {
   return matches.map(m => {
-    const odds = m.odds || 1.6;
-
-    // ✔ Model probability
-    const p = 0.35 + Math.random() * 0.30; // 0.35 → 0.65
-
-    // ✔ EV (Value Bet)
-    const ev = (p * odds) - 1;
-
-    // ✔ Kelly Criterion
-    const q = 1 - p;
-    const kelly = Math.max(0, (odds * p - q) / (odds - 1));
-
-    // ✔ Score global
-    const score = p * odds;
-
-    // 🎯 Classification
-    let label = "NO BET";
-    let confidence = 1;
-
-    if (ev > 0.10 && p > 0.55) {
-      label = "TOP VALUE"; confidence = 5;
-    }
-    else if (ev > 0.05) {
-      label = "VALUE"; confidence = 4;
-    }
-    else if (p > 0.60) {
-      label = "SAFE PICK"; confidence = 3;
-    }
-    else if (ev > 0.01) {
-      label = "LEAN"; confidence = 2;
-    }
+    const modelProb = 0.35 + Math.random() * 0.30;
+    const odds = m.odds || 1.5;
+    const ev = (modelProb * odds) - 1;
+    const score = modelProb * odds;
 
     return {
       ...m,
-      pickSide: p > 0.50 ? "home" : "away",
-      modelProb: parseFloat(p.toFixed(3)),
+      pickSide: modelProb > 0.50 ? "home" : "away",
+      modelProb: parseFloat(modelProb.toFixed(3)),
       ev: parseFloat(ev.toFixed(3)),
-      kelly: parseFloat(kelly.toFixed(3)),
-      confidence,
-      label,
       score: parseFloat(score.toFixed(3))
     };
   });
 }
 
+/******************************
+ * MAIN PROGRAM
+ ******************************/
 async function main() {
   try {
-    console.log("📡 Fetching HTML from Pronosoft...");
+    console.log("📡 Fetching HTML...");
     const html = await fetchHtml(PRONOS_URL);
 
     console.log("🔍 Parsing matches...");
@@ -120,7 +97,7 @@ async function main() {
     console.log("⏱ Adding dynamic dates...");
     matches = matches.map(addDynamicDate);
 
-    console.log("🤖 Scoring matches...");
+    console.log("🤖 Scoring...");
     const scored = scoreMatches(matches);
 
     const top = scored
@@ -131,7 +108,8 @@ async function main() {
     fs.writeFileSync(OUT1, JSON.stringify({ top, all: scored }, null, 2));
     fs.writeFileSync(OUT2, JSON.stringify(scored, null, 2));
 
-    console.log("💾 Data written to picks.json and picks_full.json");
+    console.log("💾 DONE!");
+
     process.exit(0);
   } catch (err) {
     console.error("❌ fetch_and_score error", err);
@@ -140,3 +118,4 @@ async function main() {
 }
 
 if (require.main === module) main();
+
