@@ -9,12 +9,6 @@
       "away": 3.80
     },
 
-    "baseProb": {
-      "home": 0.33,
-      "draw": 0.33,
-      "away": 0.33
-    },
-
     "modelProb": {
       "home": 0.58,
       "draw": 0.21,
@@ -27,26 +21,34 @@
       "away": -0.20
     },
 
-    "form": {
-      "home": 0.55,
-      "away": 0.45
-    },
-
-    "injuries": {
-      "home": 0.10,
-      "away": 0.05
-    },
-
-    "h2h": {
-      "homeWins": 3,
-      "awayWins": 1,
-      "draws": 2
-    },
-
     "score": {
       "home": 1.131,
       "draw": 0.21,
       "away": 0.40
+    },
+
+    "kelly": {
+      "home": {
+        "full": 0.138,
+        "half": 0.069,
+        "quarter": 0.034
+      },
+      "draw": {
+        "full": 0,
+        "half": 0,
+        "quarter": 0
+      },
+      "away": {
+        "full": 0,
+        "half": 0,
+        "quarter": 0
+      }
+    },
+
+    "recommended": {
+      "side": "home",
+      "stakeFraction": 0.034,
+      "reason": "Positive EV + Kelly confirmé"
     }
   }
 ]
