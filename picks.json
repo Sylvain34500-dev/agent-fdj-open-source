@@ -7,7 +7,11 @@
       "odds": 1.95,
       "modelProb": 0.58,
       "ev": 0.131,
-      "score": 1.131
+      "score": 1.131,
+      "stakeFraction": 0.01415,
+      "stakeAmount": 14.15,
+      "label": "WEAK_VALUE",
+      "confidence": 41
     }
   ],
   "all": [
@@ -18,7 +22,11 @@
       "odds": 1.95,
       "modelProb": 0.58,
       "ev": 0.131,
-      "score": 1.131
+      "score": 1.131,
+      "stakeFraction": 0.01415,
+      "stakeAmount": 14.15,
+      "label": "WEAK_VALUE",
+      "confidence": 41
     }
   ]
 }
