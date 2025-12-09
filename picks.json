@@ -1,61 +1,46 @@
 {
   "top": [
     {
-      "matchId": "undefined-undefined-null",
-      "start": null,
-      "pickSide": "away",
-      "odds": null,
-      "modelProb": 0.34,
-      "ev": 0,
-      "score": 0.15
+      "home": "Paris SG",
+      "away": "Marseille",
+      "start": "2025-02-27T21:47:00.000Z",
+      "odds": 1.95,
+      "pickSide": "home",
+      "modelProb": 0.58,
+      "ev": 0.131,
+      "score": 1.131
     },
     {
-      "matchId": "undefined-undefined-null",
-      "start": null,
+      "home": "Strasbourg",
+      "away": "Lille",
+      "start": "2025-02-27T22:14:00.000Z",
+      "odds": 2.30,
       "pickSide": "away",
-      "odds": null,
-      "modelProb": 0.34,
-      "ev": 0,
-      "score": 0.15
-    },
-    {
-      "matchId": "undefined-undefined-null",
-      "start": null,
-      "pickSide": "away",
-      "odds": null,
-      "modelProb": 0.34,
-      "ev": 0,
-      "score": 0.15
+      "modelProb": 0.51,
+      "ev": 0.173,
+      "score": 1.173
     }
   ],
-  "positive": [],
   "all": [
     {
-      "matchId": "undefined-undefined-null",
-      "start": null,
-      "pickSide": "away",
-      "odds": null,
-      "modelProb": 0.34,
-      "ev": 0,
-      "score": 0.15
+      "home": "Paris SG",
+      "away": "Marseille",
+      "start": "2025-02-27T21:47:00.000Z",
+      "odds": 1.95,
+      "pickSide": "home",
+      "modelProb": 0.58,
+      "ev": 0.131,
+      "score": 1.131
     },
     {
-      "matchId": "undefined-undefined-null",
-      "start": null,
+      "home": "Strasbourg",
+      "away": "Lille",
+      "start": "2025-02-27T22:14:00.000Z",
+      "odds": 2.30,
       "pickSide": "away",
-      "odds": null,
-      "modelProb": 0.34,
-      "ev": 0,
-      "score": 0.15
-    },
-    {
-      "matchId": "undefined-undefined-null",
-      "start": null,
-      "pickSide": "away",
-      "odds": null,
-      "modelProb": 0.34,
-      "ev": 0,
-      "score": 0.15
+      "modelProb": 0.51,
+      "ev": 0.173,
+      "score": 1.173
     }
   ]
 }
