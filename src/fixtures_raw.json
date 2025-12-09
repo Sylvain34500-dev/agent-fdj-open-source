@@ -1,0 +1,24 @@
+{
+  "fixtures": [
+    {
+      "home": "Team A",
+      "away": "Team B",
+      "date": "2025-12-09T20:00:00Z",
+      "odds": {
+        "home": 2.10,
+        "draw": 3.40,
+        "away": 3.60
+      }
+    },
+    {
+      "home": "Team C",
+      "away": "Team D",
+      "date": "2025-12-09T23:00:00Z",
+      "odds": {
+        "home": 1.95,
+        "draw": 3.20,
+        "away": 4.20
+      }
+    }
+  ]
+}
