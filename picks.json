@@ -1,46 +1,24 @@
 {
   "top": [
     {
-      "home": "Paris SG",
-      "away": "Marseille",
+      "matchId": "XXX-YYY-123",
       "start": "2025-02-27T21:47:00.000Z",
-      "odds": 1.95,
       "pickSide": "home",
+      "odds": 1.95,
       "modelProb": 0.58,
       "ev": 0.131,
       "score": 1.131
-    },
-    {
-      "home": "Strasbourg",
-      "away": "Lille",
-      "start": "2025-02-27T22:14:00.000Z",
-      "odds": 2.30,
-      "pickSide": "away",
-      "modelProb": 0.51,
-      "ev": 0.173,
-      "score": 1.173
     }
   ],
   "all": [
     {
-      "home": "Paris SG",
-      "away": "Marseille",
+      "matchId": "XXX-YYY-123",
       "start": "2025-02-27T21:47:00.000Z",
-      "odds": 1.95,
       "pickSide": "home",
+      "odds": 1.95,
       "modelProb": 0.58,
       "ev": 0.131,
       "score": 1.131
-    },
-    {
-      "home": "Strasbourg",
-      "away": "Lille",
-      "start": "2025-02-27T22:14:00.000Z",
-      "odds": 2.30,
-      "pickSide": "away",
-      "modelProb": 0.51,
-      "ev": 0.173,
-      "score": 1.173
     }
   ]
 }
