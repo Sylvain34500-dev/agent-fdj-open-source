@@ -1,104 +1,52 @@
 [
   {
-    "matchId": "undefined-undefined-null",
-    "start": null,
+    "matchId": "XXX-YYY-123",
+    "start": "2025-02-27T21:47:00.000Z",
+
     "odds": {
-      "home": null,
-      "draw": null,
-      "away": null
+      "home": 1.95,
+      "draw": 3.20,
+      "away": 3.80
     },
+
     "baseProb": {
       "home": 0.33,
+      "draw": 0.33,
       "away": 0.33
     },
+
     "modelProb": {
-      "home": 0.34,
-      "away": 0.34
+      "home": 0.58,
+      "draw": 0.21,
+      "away": 0.21
     },
+
     "ev": {
-      "home": 0,
-      "away": 0
+      "home": 0.131,
+      "draw": -0.33,
+      "away": -0.20
     },
+
     "form": {
-      "home": 0.5,
-      "away": 0.5
+      "home": 0.55,
+      "away": 0.45
     },
+
     "injuries": {
-      "home": 0,
-      "away": 0
+      "home": 0.10,
+      "away": 0.05
     },
-    "h2h": 0.5,
+
+    "h2h": {
+      "homeWins": 3,
+      "awayWins": 1,
+      "draws": 2
+    },
+
     "score": {
-      "home": 0,
-      "away": 0.15
-    }
-  },
-  {
-    "matchId": "undefined-undefined-null",
-    "start": null,
-    "odds": {
-      "home": null,
-      "draw": null,
-      "away": null
-    },
-    "baseProb": {
-      "home": 0.33,
-      "away": 0.33
-    },
-    "modelProb": {
-      "home": 0.34,
-      "away": 0.34
-    },
-    "ev": {
-      "home": 0,
-      "away": 0
-    },
-    "form": {
-      "home": 0.5,
-      "away": 0.5
-    },
-    "injuries": {
-      "home": 0,
-      "away": 0
-    },
-    "h2h": 0.5,
-    "score": {
-      "home": 0,
-      "away": 0.15
-    }
-  },
-  {
-    "matchId": "undefined-undefined-null",
-    "start": null,
-    "odds": {
-      "home": null,
-      "draw": null,
-      "away": null
-    },
-    "baseProb": {
-      "home": 0.33,
-      "away": 0.33
-    },
-    "modelProb": {
-      "home": 0.34,
-      "away": 0.34
-    },
-    "ev": {
-      "home": 0,
-      "away": 0
-    },
-    "form": {
-      "home": 0.5,
-      "away": 0.5
-    },
-    "injuries": {
-      "home": 0,
-      "away": 0
-    },
-    "h2h": 0.5,
-    "score": {
-      "home": 0,
-      "away": 0.15
+      "home": 1.131,
+      "draw": 0.21,
+      "away": 0.40
     }
   }
 ]
