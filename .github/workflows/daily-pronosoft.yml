@@ -2,13 +2,13 @@ name: Daily Pronosoft -> Telegram
 
 on:
   schedule:
-    # run at 07:00 Europe/Paris (UTC+1 -> 06:00 UTC) -> use 06:00 UTC
-    - cron: '0 6 * * *'
+    - cron: '0 6 * * *' # 06:00 UTC (=07:00 Paris)
   workflow_dispatch: {}
 
 jobs:
   run:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -16,13 +16,21 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20   # <<< FIX HERE
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run daily scraper and send to Telegram
+      - name: Run Pronosoft Scraper
+        run: |
+          node src/scraper/pronosoft.js
+          node src/scraper/aggregate_odds.js
+
+      - name: Process Picks
+        run: node src/process_picks.cjs
+
+      - name: Send Telegram Daily
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: npm run daily
+        run: node src/send_daily_report.cjs
