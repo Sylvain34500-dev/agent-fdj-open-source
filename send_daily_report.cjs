@@ -13,23 +13,71 @@ if (!TELEGRAM_TOKEN || !CHAT_ID) {
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: false });
 
-// ==== LECTURE DU FICHIER DE PICKS ====
-const picksFile = path.join(__dirname, "daily_bets.txt");
-let content = "";
+// ========= LECTURE ==========
+const filePath = path.join(__dirname, "daily_bets.txt");
+let raw = "";
 
-if (fs.existsSync(picksFile)) {
-  content = fs.readFileSync(picksFile, "utf8");
+if (fs.existsSync(filePath)) {
+  raw = fs.readFileSync(filePath, "utf8").trim();
 } else {
-  content = "⚠ Fichier daily_bets.txt introuvable !";
+  raw = "⚠ daily_bets.txt introuvable";
 }
 
-// ==== ENVOI ====
-bot.sendMessage(CHAT_ID, content, { parse_mode: "Markdown" })
+// ========= PARSE ==========
+function parseBets(raw) {
+  const lines = raw.split('\n');
+  
+  const bets = [];
+  let current = {};
+
+  for (const line of lines) {
+    const clean = line.trim();
+
+    // Match numéro (ex: "1. Home vs Away")
+    if (/^\d+\./.test(clean)) {
+      if (current.match) {
+        bets.push({ ...current });
+      }
+      current = { match: clean.substring(clean.indexOf('.')+1).trim() };
+    }
+
+    if (clean.startsWith("Pronostic:")) {
+      current.pronostic = clean.replace("Pronostic:", "").trim();
+    }
+
+    if (clean.startsWith("Meilleure cote:")) {
+      current.best = clean.replace("Meilleure cote:", "").trim();
+    }
+  }
+
+  if (current.match) bets.push(current);
+
+  return bets;
+}
+
+const bets = parseBets(raw);
+
+// ========= FORMAT ==========
+function formatBets(bets) {
+  if (!bets.length) {
+    return "⚠ Aucun pronostic détecté aujourd'hui.";
+  }
+
+  return `📊 *Pronostics du jour*\n\n` + 
+    bets.map((b,i) =>
+      `*${i+1}.* ${b.match}\n➡️ Pronostic: *${b.pronostic}*\n💰 Cote: ${b.best}`
+    ).join("\n\n");
+}
+
+const message = formatBets(bets);
+
+// ========= ENVOI TELEGRAM ==========
+bot.sendMessage(CHAT_ID, message, { parse_mode: "Markdown" })
   .then(() => {
     console.log("📨 Telegram envoyé !");
     process.exit(0);
   })
   .catch(err => {
-    console.error("ERREUR ENVOI:", err.message);
+    console.error("❌ ERREUR ENVOI:", err.message);
     process.exit(1);
   });
