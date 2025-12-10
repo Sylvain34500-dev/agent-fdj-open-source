@@ -23,7 +23,7 @@ if (!TELEGRAM_TOKEN) {
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { webHook: false, polling: false });
 
-// HANDLE TELEGRAM MESSAGES ===============================================
+// HANDLE TELEGRAM COMMANDS ===============================================
 async function handleUpdate(update) {
   try {
     if (!update) return;
@@ -32,6 +32,7 @@ async function handleUpdate(update) {
 
     const text = msg.text.trim();
     const chatId = msg.chat?.id || msg.from?.id;
+
     if (!chatId) return;
 
     if (text.startsWith("/bets")) {
@@ -40,7 +41,7 @@ async function handleUpdate(update) {
       try {
         content = fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : content;
       } catch (e) {
-        console.error("read daily_bets:", e.message);
+        console.error("Erreur lecture daily_bets:", e.message);
       }
       await bot.sendMessage(chatId, content, { parse_mode: "Markdown" });
       return;
@@ -69,6 +70,7 @@ async function configureWebhook() {
   }
 }
 
+// APP =====================================================================
 const app = express();
 app.use(bodyParser.json());
 
@@ -82,42 +84,36 @@ app.post(`/webhook/${TELEGRAM_TOKEN}`, (req, res) => {
   }
 });
 
-// MANUAL SEND ==============================================================
-app.get("/manual-send", async (req, res) => {
-  const scriptPath = path.join(__dirname, "send_daily_report.cjs");
+// --- GENERIC FUNCTION TO CALL SCRIPTS ---------------------------------
+function runScript(scriptName, res) {
+  const scriptPath = path.join(__dirname, scriptName);
 
   if (!fs.existsSync(scriptPath)) {
-    console.error("send_daily_report.cjs introuvable !");
-    return res.status(500).send("❌ Script send_daily_report.cjs introuvable.");
+    return res.status(500).send(`❌ Script introuvable: ${scriptName}`);
   }
 
   exec(`node ${scriptPath}`, (error, stdout, stderr) => {
     if (error) {
-      console.error("⚠️ ERREUR MANUAL_SEND:", error);
-      return res.status(500).send("❌ Erreur lors de l'envoi manuel (logs Render).");
+      console.error(`❌ ERREUR (${scriptName}):`, error);
+      return res.status(500).send(`❌ Erreur: ${error.message}`);
     }
 
-    // TEST DEBUG PARSING LOGS RENDER
-    console.log("--------- 🧪 PARSING DEBUG ---------");
-    console.log(stdout);
-    console.log("------------------------------------");
-
-    console.log("📤 Rapport envoyé !");
-    res.send("📤 Rapport envoyé sur Telegram !");
+    console.log(`📤 OUTPUT ${scriptName}:`, stdout);
+    res.send(`📤 Script exécuté: ${scriptName}`);
   });
-});
+}
 
-// CRON (GH Action) ==========================================================
-app.get("/run-cron", async (req, res) => {
-  try {
-    if (RENDER_DEPLOY_HOOK) {
-      await axios.post(RENDER_DEPLOY_HOOK).catch(() => {});
-      console.log("Deploy hook appelé.");
-    }
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ ok: false, err: e.message });
-  }
+// --- ENDPOINTS ---------------------------------------------------------
+app.get("/run-daily-report", (req, res) => runScript("send_daily_report.cjs", res));
+
+app.get("/run-pronosoft", (req, res) => runScript("fetch_and_score.cjs", res));
+
+app.get("/run-fdj", (req, res) => runScript("odds_fdj.json", res)); // exemple placeholder
+
+app.get("/run-all", (req, res) => {
+  runScript("send_daily_report.cjs", { send:()=>{} });
+  runScript("fetch_and_score.cjs", { send:()=>{} });
+  res.send("🚀 Lancement global (report + pronosoft)");
 });
 
 // ROOT PAGE ================================================================
@@ -130,4 +126,5 @@ const server = app.listen(PORT, async () => {
 });
 
 module.exports = server;
+
 
