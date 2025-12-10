@@ -1,9 +1,24 @@
+
 import fs from "fs";
+import path from "path";
 
 // -------------------------
-//  Parameters (you can edit)
+// Safe path helpers (fix)
 // -------------------------
-const BANKROLL = 1000;  // Example
+const __root = path.dirname(new URL(import.meta.url).pathname);
+
+// raw input location (src/data/raw_picks.json)
+const RAW_PICKS_PATH = path.join(__root, "data", "raw_picks.json");
+
+// output folder (src/)
+const PICKS_FULL_PATH = path.join(__root, "picks_full.json");
+const PICKS_PATH = path.join(__root, "picks.json");
+
+
+// -------------------------
+//  Parameters (editable)
+// -------------------------
+const BANKROLL = 1000;
 const SAFE_MULTIPLIER = 0.75;
 const CONSERVATIVE_MULTIPLIER = 1.00;
 const AGGRESSIVE_MULTIPLIER = 3.00;
@@ -12,7 +27,7 @@ const AGGRESSIVE_MULTIPLIER = 3.00;
 // -------------------------
 // Read raw model picks
 // -------------------------
-const raw = JSON.parse(fs.readFileSync("./data/raw_picks.json", "utf8"));
+const raw = JSON.parse(fs.readFileSync(RAW_PICKS_PATH, "utf8"));
 
 
 // --------------------------------
@@ -29,7 +44,7 @@ function computeEV(prob, odds) {
 function kelly(prob, odds) {
   const b = odds - 1;
   const k = (prob * b - (1 - prob)) / b;
-  return Math.max(0, k);  // never negative
+  return Math.max(0, k);
 }
 
 
@@ -42,110 +57,29 @@ const summaryOutput = [];
 for (const m of raw) {
   const { matchId, start, odds, modelProb, confidence = 50 } = m;
 
-  // --- EV
   const ev = {
     home: computeEV(modelProb.home, odds.home),
     draw: computeEV(modelProb.draw, odds.draw),
     away: computeEV(modelProb.away, odds.away)
   };
 
-  // --- Kelly full
   const kellyRaw = {
     home: kelly(modelProb.home, odds.home),
     draw: kelly(modelProb.draw, odds.draw),
     away: kelly(modelProb.away, odds.away)
   };
 
-  // Choose best side (highest positive EV)
+  // best side
   const bestSide =
     ev.home > 0 && ev.home >= ev.draw && ev.home >= ev.away ? "home" :
     ev.draw > 0 && ev.draw >= ev.home && ev.draw >= ev.away ? "draw" :
     ev.away > 0 && ev.away >= ev.home && ev.away >= ev.draw ? "away" :
     null;
 
-  if (!bestSide) {
-    // skip No Value match
-    continue;
-  }
+  if (!bestSide) continue;
 
   const rawKelly = kellyRaw[bestSide];
 
-  // Adjust by confidence (linear scaling)
   const k_adj = rawKelly * (confidence / 100);
 
-  // SAFE / CONSERVATIVE / AGGRESSIVE variants
-  const k_safe = k_adj * SAFE_MULTIPLIER * 0.5;
-  const k_cons = k_adj * CONSERVATIVE_MULTIPLIER * 0.5;
-  const k_aggr = k_adj * AGGRESSIVE_MULTIPLIER * 0.5;
-
-  // Convert to stake amount
-  const stake_safe = (k_safe * BANKROLL).toFixed(2);
-  const stake_cons = (k_cons * BANKROLL).toFixed(2);
-  const stake_aggr = (k_aggr * BANKROLL).toFixed(2);
-
-  // -----------------------------
-  // picks_full.json entry
-  // -----------------------------
-  const fullEntry = {
-    matchId,
-    start,
-    odds,
-    modelProb,
-    ev,
-    kelly: {
-      rawFraction: rawKelly,
-      adjusted: k_adj
-    },
-    stakeOptions: {
-      safe: {
-        fraction: k_safe,
-        amount_eur: Number(stake_safe)
-      },
-      conservative: {
-        fraction: k_cons,
-        amount_eur: Number(stake_cons)
-      },
-      aggressive: {
-        fraction: k_aggr,
-        amount_eur: Number(stake_aggr)
-      }
-    },
-    recommended: {
-      side: bestSide,
-      stakeFraction_safe: k_safe,
-      stakeFraction_conservative: k_cons,
-      stakeFraction_aggressive: k_aggr,
-      confidence
-    }
-  };
-
-  fullOutput.push(fullEntry);
-
-  // -----------------------------
-  // picks.json simplified entry
-  // -----------------------------
-  summaryOutput.push({
-    matchId,
-    start,
-    pickSide: bestSide,
-    odds: odds[bestSide],
-    modelProb: modelProb[bestSide],
-    ev: ev[bestSide],
-    stake_safe: Number(stake_safe),
-    stake_conservative: Number(stake_cons),
-    stake_aggressive: Number(stake_aggr),
-    confidence
-  });
-}
-
-
-// -----------------------------
-// Write outputs
-// -----------------------------
-fs.writeFileSync("./picks_full.json", JSON.stringify(fullOutput, null, 2));
-fs.writeFileSync(
-  "./picks.json",
-  JSON.stringify({ top: summaryOutput.slice(0, 1), all: summaryOutput }, null, 2)
-);
-
-console.log("✔ picks_full.json and picks.json generated");
+  const k_safe = k_adj * SAFE_MULTI_*
