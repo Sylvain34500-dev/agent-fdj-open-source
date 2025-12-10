@@ -27,7 +27,7 @@ jobs:
           node src/scraper/aggregate_odds.js
 
       - name: Process Picks
-        run: node src/process_picks.cjs
+        run: node src/process_picks.js
 
       - name: Send Telegram Daily
         env:
