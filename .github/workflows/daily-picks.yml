@@ -9,6 +9,9 @@ jobs:
   build-and-generate:
     runs-on: ubuntu-latest
 
+    env:
+      RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -43,9 +46,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Trigger Render redeploy (optional)
-        if: ${{ secrets.RENDER_DEPLOY_HOOK && secrets.RENDER_DEPLOY_HOOK != '' }}
-        env:
-          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        if: ${{ env.RENDER_DEPLOY_HOOK != '' }}
         run: |
           curl -X POST "$RENDER_DEPLOY_HOOK"
+
 
