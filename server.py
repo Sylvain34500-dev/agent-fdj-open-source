@@ -22,9 +22,8 @@ def cron_loop():
             run_agent()
         except Exception as e:
             print("Erreur dans l’agent :", e)
-        time.sleep(600)  # toutes les 10 minutes
+        time.sleep(600)
 
-# Thread cron
 threading.Thread(target=cron_loop, daemon=True).start()
 
 if __name__ == "__main__":
