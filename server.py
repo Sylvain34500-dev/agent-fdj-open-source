@@ -24,7 +24,7 @@ def cron_loop():
             print("Erreur dans l’agent :", e)
         time.sleep(600)  # toutes les 10 minutes
 
-# Thread pour le cron interne
+# Thread cron
 threading.Thread(target=cron_loop, daemon=True).start()
 
 if __name__ == "__main__":
