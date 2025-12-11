@@ -10,16 +10,16 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install cron
-RUN apt-get update && apt-get install -y cron
+RUN apt-get update && apt-get install -y cron && apt-get clean
 
 # Copy cron job
 COPY cronjob /etc/cron.d/bot-cron
 
-# Give execution rights
+# Permissions
 RUN chmod 0644 /etc/cron.d/bot-cron
 
 # Register cron job
 RUN crontab /etc/cron.d/bot-cron
 
-# Start cron in foreground (important for Render)
+# Launch cron in foreground (important for Render)
 CMD ["cron", "-f"]
