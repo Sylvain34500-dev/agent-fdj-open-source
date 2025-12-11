@@ -1,22 +1,20 @@
 import requests
-from utils.logger import log
 from config.settings import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+from utils.logger import log
 
-
-def send_telegram_message(preds):
-    log("Envoi Telegram...")
-
-    if TELEGRAM_BOT_TOKEN == "A_REMPLACER":
-        log("⚠️ Token Telegram non configuré. Message non envoyé.")
-        return
-
-    text = "🟢 PRONOSTICS DU JOUR\n\n"
-    for m in preds[:5]:  # On limite pour éviter spam
-        text += f"{m['team1']} vs {m['team2']} → {m['prediction']}\n"
-
+def send_message(text: str):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": text}
+    data = {"chat_id": TELEGRAM_CHAT_ID, "text": text}
 
-    requests.post(url, json=payload)
+    try:
+        r = requests.post(url, data=data)
+        if r.status_code != 200:
+            log(f"Telegram error: {r.text}")
+        return r.json()
+    except Exception as e:
+        log(f"Telegram send error: {e}")
 
-    log("Message Telegram envoyé.")
+
+def send_test_message(text: str):
+    log("Sending test Telegram message...")
+    send_message(text)
