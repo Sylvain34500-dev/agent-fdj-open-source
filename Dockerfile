@@ -3,23 +3,26 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Copy everything into the container
-COPY . .
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install cron
-RUN apt-get update && apt-get install -y cron && apt-get clean
+# Copy project files
+COPY . .
 
-# Copy cron job
-COPY cronjob /etc/cron.d/bot-cron
+# Environment variable required by Render
+ENV PORT=10000
 
-# Permissions
-RUN chmod 0644 /etc/cron.d/bot-cron
+# Expose the Render port
+EXPOSE 10000
 
-# Register cron job
-RUN crontab /etc/cron.d/bot-cron
-
-# Launch cron in foreground (important for Render)
-CMD ["cron", "-f"]
+# Start Flask + internal cron loop
+CMD ["python", "server.py"]
