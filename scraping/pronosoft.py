@@ -5,16 +5,20 @@ from config.settings import PRONOSOFT_URL
 
 
 def scrape_pronosoft():
-    log("Scraping Pronosoft...")
+    log("🔎 Scraping Pronosoft...")
 
-    response = requests.get(PRONOSOFT_URL)
-    if response.status_code != 200:
-        log(f"Erreur HTTP {response.status_code}")
+    try:
+        response = requests.get(PRONOSOFT_URL, timeout=10)
+    except Exception as e:
+        log(f"❌ Erreur réseau : {e}")
         return []
 
-    soup = BeautifulSoup(response.text, "html.parser")
+    if response.status_code != 200:
+        log(f"❌ Erreur HTTP {response.status_code}")
+        return []
 
-    # Extraction simple (à améliorer ensuite)
+    soup = BeautifulSoup(response.text, "lxml")
+
     matches = []
     rows = soup.select("tr")
 
@@ -28,5 +32,5 @@ def scrape_pronosoft():
             }
             matches.append(match)
 
-    log(f"{len(matches)} matchs trouvés.")
+    log(f"✔️ {len(matches)} matchs trouvés.")
     return matches
