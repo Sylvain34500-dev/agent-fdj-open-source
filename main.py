@@ -6,6 +6,34 @@ from export.exporter import export_results
 from telegram.send import send_telegram_message
 from utils.logger import log
 
+# ---- Serveur web pour Render ----
+from flask import Flask
+import threading
+import time
+import os
+
+app = Flask(__name__)
+
+@app.get("/")
+def home():
+    return "Agent FDJ actif (Render OK)"
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
+# ---- Process principal du bot ----
+def run_agent():
+    while True:
+        try:
+            main()
+        except Exception as e:
+            log(f"❌ Erreur dans l’agent : {e}")
+
+        # Attendre avant prochaine boucle
+        log("⏳ Pause de 5 minutes avant prochain run...")
+        time.sleep(300)  # 5 min
+
 def main():
     log("🔍 Démarrage de l’agent FDJ...")
 
@@ -35,5 +63,10 @@ def main():
 
     log("✅ Agent FDJ terminé.")
 
+
 if __name__ == "__main__":
-    main()
+    # Lancer le serveur web dans un thread pour satisfaire Render
+    threading.Thread(target=run_web_server).start()
+
+    # Lancer l’agent FDJ en boucle
+    run_agent()
