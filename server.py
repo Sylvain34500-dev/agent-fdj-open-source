@@ -54,7 +54,7 @@ def telegram_webhook():
 
     try:
         # appelle la fonction de handling (dans telegram/handler.py)
-        from telegram.handler import handle_update
+        from bot_service.handler import handle_update
         handle_update(data)
     except Exception as e:
         app.logger.exception("Erreur dans handle_update:")
