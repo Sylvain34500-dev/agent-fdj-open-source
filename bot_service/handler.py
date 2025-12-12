@@ -1,4 +1,4 @@
-# telegram/handler.py
+# bot_service/handler.py
 import os
 import requests
 from utils.logger import log
