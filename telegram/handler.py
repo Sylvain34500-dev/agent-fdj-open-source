@@ -1,20 +1,29 @@
-import requests
+# telegram/handler.py
 import os
+import requests
 
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
-def handle_update(update):
-    if "message" in update and "text" in update["message"]:
-        text = update["message"]["text"]
+def send_message(text):
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+    requests.post(url, json={"chat_id": CHAT_ID, "text": text})
 
-        if text.lower() == "/fdj":
-            send_message("⏳ Je lance les pronostics...")
+def handle_update(update):
+    # Vérification message
+    if "message" not in update:
+        return
+
+    message = update["message"]
+    text = message.get("text", "").lower()
+
+    # Commande /fdj
+    if text == "/fdj":
+        send_message("⏳ Je lance les pronostics...")
+
+        try:
             from main import main
             main()
             send_message("✅ Pronostics envoyés !")
-
-
-def send_message(msg):
-    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    requests.post(url, json={"chat_id": CHAT_ID, "text": msg})
+        except Exception as e:
+            send_message(f"❌ Erreur lors du traitement : {e}")
