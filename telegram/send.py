@@ -1,4 +1,4 @@
-# telegram/send.py
+# telegram/send.py (debug safe version)
 import requests
 import os
 from utils.logger import log
@@ -20,13 +20,14 @@ def send_telegram_message(preds):
     log(f"🔎 send_telegram_message called. TELEGRAM_TOKEN={_masked(TELEGRAM_TOKEN)} CHAT_ID={CHAT_ID}")
 
     if not TELEGRAM_TOKEN or not CHAT_ID:
-        log("❌ TELEGRAM_TOKEN ou CHAT_ID manquant dans Render.")
+        log("❌ TELEGRAM_TOKEN ou CHAT_ID manquant dans Render. Vérifie Settings > Environment.")
         return
 
-    # si preds vide -> envoi message test
+    # si preds vide -> envoi message test pour debug
     if not preds:
         message = "🧪 Test message from Agent FDJ — pipeline ran but no predictions to send."
     else:
+        # construction message normal
         message = "🎯 PRONOS FDJ\n\n"
         try:
             for p in preds:
@@ -47,7 +48,10 @@ def send_telegram_message(preds):
     try:
         res = requests.post(url, json=payload, timeout=15)
         log(f"📡 Telegram HTTP status: {res.status_code}")
-        log(f"📡 Telegram response: {res.text[:800]}")
+        try:
+            log(f"📡 Telegram response: {res.text[:800]}")
+        except Exception:
+            log("📡 Telegram response: <could not read body>")
         if res.status_code != 200:
             log("❌ Telegram did not accept the message.")
     except Exception as e:
@@ -55,3 +59,4 @@ def send_telegram_message(preds):
 
 def send_test_message():
     send_telegram_message([])
+
