@@ -18,11 +18,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy all project files
 COPY . .
 
-# Render requires this environment variable
-ENV PORT=10000
+# Render fournit déjà la variable PORT 
+# donc PAS de valeur fixe (sinon ça casse l'environnement Render)
+# On NE DOIT PAS faire ENV PORT=10000 ⚠️
+#
+# On laisse Render injecter $PORT automatiquement.
 
-# Expose the port used by the server
+# EXPOSER un port est correct, mais 10000 n’est qu’un indicatif.
+# Render remappe automatiquement vers $PORT.
 EXPOSE 10000
 
-# Start the server (which runs Flask + cron scheduler)
+# Démarrer ton serveur Flask
 CMD ["python", "server.py"]
