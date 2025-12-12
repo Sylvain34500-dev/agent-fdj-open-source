@@ -1,15 +1,15 @@
 # server.py
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 import threading
 import subprocess
 import os
+from telegram.send import send_telegram_message
 
 app = Flask(__name__)
 
 def run_pipeline_capture():
     """
     Lance main.py en subprocess et retourne stdout, stderr, returncode.
-    Capture automatique + timeout large.
     """
     try:
         proc = subprocess.run(
@@ -27,7 +27,7 @@ def run_pipeline_capture():
 
 def background_run_once():
     """
-    Lance un run en background au démarrage (non bloquant).
+    Lance un run en background au démarrage.
     """
     def _worker():
         app.logger.info("Background initial run starting...")
@@ -63,9 +63,35 @@ def manual_run():
     }), 202
 
 
+# ------------- 🔥 ROUTE WEBHOOK TELEGRAM (MANQUANTE) -----------------
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    """
+    Reçoit les messages de Telegram.
+    """
+    data = request.get_json()
+
+    # Protection si Telegram envoie un update vide
+    if not data:
+        return "OK", 200
+
+    # Si message texte envoyé
+    if "message" in data:
+        chat_id = data["message"]["chat"]["id"]
+        text = data["message"].get("text", "")
+
+        # Accusé réception dans Telegram
+        send_telegram_message("🤖 Webhook bien reçu !")
+    
+    return "OK", 200
+
+
+# ----------------------------------------------------------------------
+
+
 if __name__ == "__main__":
     background_run_once()
 
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-
