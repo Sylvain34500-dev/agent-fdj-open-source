@@ -1,47 +1,48 @@
-from scraping.pronosoft.pronosoft import scrape_pronosoft
-from cleaning.cleaner import clean_data
-from analysis.analyzer import analyze
-from predictions.predictor import make_predictions
-from export.exporter import export_results
-from telegram.send import send_telegram_message
+# main.py – Pipeline FDJ propre et stable
+
 from utils.logger import log
+from scraping.pronosoft import scrape_pronosoft
+from predictions.predictor import make_prediction
+from telegram.send import send_telegram_message
+
 
 def main():
-    """Exécute un run complet puis termine."""
-    log("🔍 Démarrage d’un run FDJ...")
+    log("🚀 DÉMARRAGE DU PIPELINE FDJ")
 
+    # 1) SCRAPING
+    matches = scrape_pronosoft()
+
+    if not matches:
+        log("⚠️ Aucun match trouvé, fin du pipeline.")
+        return
+
+    log(f"📌 {len(matches)} matchs récupérés.")
+
+    # 2) CLEAN + PREDICTIONS
+    predictions = []
+
+    for m in matches:
+        try:
+            pred = make_prediction(m)  # simple pour l'instant
+            predictions.append({
+                "match": f"{m.get('team1')} vs {m.get('team2')}",
+                "prediction": pred.get("result", "N/A"),
+                "confidence": pred.get("confidence", 0),
+            })
+        except Exception as e:
+            log(f"❌ Erreur prédiction match : {e}")
+
+    log(f"📊 {len(predictions)} prédictions générées.")
+
+    # 3) ENVOI TELEGRAM
     try:
-        # 1) Scraping
-        raw_data = scrape_pronosoft()
-        log("📥 Scraping terminé.")
-
-        # 2) Nettoyage
-        clean = clean_data(raw_data)
-        log("🧹 Nettoyage terminé.")
-
-        # 3) Analyse
-        analysed = analyze(clean)
-        log("📊 Analyse terminée.")
-
-        # 4) Prédictions
-        preds = make_predictions(analysed)
-        log("🤖 Prédictions générées.")
-
-        # 5) Export
-        export_results(preds)
-        log("📤 Export terminé.")
-
-        # 6) Telegram
-        send_telegram_message(preds)
-        log("📨 Message Telegram envoyé.")
-
-        log("✅ Run FDJ terminé.")
-
+        send_telegram_message(predictions)
     except Exception as e:
-        log(f"❌ ERREUR DANS LE RUN : {e}")
+        log(f"❌ Erreur envoi Telegram : {e}")
+
+    log("✅ PIPELINE TERMINÉ.")
 
 
 if __name__ == "__main__":
-    # Si on exécute manuellement main.py localement
     main()
 
