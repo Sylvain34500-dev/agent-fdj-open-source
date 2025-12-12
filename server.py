@@ -1,24 +1,41 @@
-from flask import Flask
 import threading
 import time
-from main import main as run_agent
+from flask import Flask
+import subprocess
+import os
 
 app = Flask(__name__)
 
-@app.route('/')
-def home():
-    return "FDJ Agent Running"
+# --- CONFIGURATION ---
+CRON_INTERVAL_MINUTES = int(os.getenv("CRON_INTERVAL", 60))  # 60 = toutes les heures par défaut
 
-def start_cron_loop():
+
+def run_main():
+    """Execute main.py as a subprocess."""
+    print("🚀 Running pipeline main.py ...")
+    result = subprocess.run(["python", "main.py"], capture_output=True, text=True)
+
+    print("✔️ Pipeline finished")
+    print("STDOUT:", result.stdout)
+    print("STDERR:", result.stderr)
+
+
+def cron_loop():
+    """Internal cron scheduler."""
     while True:
-        print("Running agent...")
-        run_agent()
-        time.sleep(3600)  # toutes les 60 minutes
+        run_main()
+        print(f"⏳ Waiting {CRON_INTERVAL_MINUTES} minutes before next run...")
+        time.sleep(CRON_INTERVAL_MINUTES * 60)
 
-if __name__ == '__main__':
-    # Lancer la boucle de cron en tâche de fond
-    thread = threading.Thread(target=start_cron_loop)
-    thread.daemon = True
-    thread.start()
 
-    app.run(host='0.0.0.0', port=10000)
+@app.route("/")
+def home():
+    return "Bot FDJ running."
+
+
+if __name__ == "__main__":
+    # Start cron thread
+    threading.Thread(target=cron_loop, daemon=True).start()
+
+    # Start Flask server
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
