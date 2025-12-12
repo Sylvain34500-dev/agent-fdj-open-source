@@ -10,7 +10,7 @@ app = Flask(__name__)
 def run_pipeline_capture():
     """Lance main.py en subprocess et retourne (stdout, stderr, returncode)."""
     try:
-        proc = subprocess.run(["python", "main.py"], capture_output=True, text=True, timeout=3600)
+        proc = subprocess.run(["python3", "main.py"], capture_output=True, text=True, timeout=3600)
         return proc.stdout, proc.stderr, proc.returncode
     except subprocess.TimeoutExpired as e:
         return "", f"TimeoutExpired: {e}", 124
