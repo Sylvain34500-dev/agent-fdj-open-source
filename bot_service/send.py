@@ -1,4 +1,4 @@
-# telegram/send.py (debug safe version)
+# bot_service/send.py (debug safe version)
 import requests
 import os
 from utils.logger import log
