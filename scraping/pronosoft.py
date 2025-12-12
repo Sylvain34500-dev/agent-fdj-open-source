@@ -1,36 +1,56 @@
+# telegram/send.py
 import requests
-from bs4 import BeautifulSoup
+import os
 from utils.logger import log
-from config.settings import PRONOSOFT_URL
 
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
-def scrape_pronosoft():
-    log("🔎 Scraping Pronosoft...")
+def _masked(token: str) -> str:
+    if not token:
+        return "<NONE>"
+    if len(token) > 8:
+        return token[:6] + "..." + token[-3:]
+    return token
+
+def send_telegram_message(preds):
+    log(f"[TELEGRAM] send_telegram_message called")
+    log(f"[TELEGRAM] TOKEN={_masked(TELEGRAM_TOKEN)} CHAT_ID={CHAT_ID}")
+
+    if not TELEGRAM_TOKEN or not CHAT_ID:
+        log("❌ TELEGRAM_TOKEN ou CHAT_ID manquant dans Render.")
+        return
+
+    if not preds:
+        message = "🧪 Test message: pipeline executed but no predictions available."
+    else:
+        message = "🎯 PRONOS FDJ\n\n"
+        for p in preds:
+            try:
+                match = p.get("match", "Match inconnu")
+                prediction = p.get("prediction", "N/A")
+                confidence = p.get("confidence", "N/A")
+                message += f"🏟️ {match}\n📊 {prediction}\n💡 {confidence}%\n\n"
+            except:
+                pass
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": message,
+        "parse_mode": "Markdown"
+    }
 
     try:
-        response = requests.get(PRONOSOFT_URL, timeout=10)
+        res = requests.post(url, json=payload, timeout=15)
+        log(f"[TELEGRAM] Status: {res.status_code}")
+        log(f"[TELEGRAM] Response: {res.text}")
+
+        if res.status_code != 200:
+            log("❌ Telegram rejected the message. Check CHAT_ID & if bot started.")
     except Exception as e:
-        log(f"❌ Erreur réseau : {e}")
-        return []
+        log(f"❌ Exception during Telegram send: {e}")
 
-    if response.status_code != 200:
-        log(f"❌ Erreur HTTP {response.status_code}")
-        return []
-
-    soup = BeautifulSoup(response.text, "lxml")
-
-    matches = []
-    rows = soup.select("tr")
-
-    for row in rows:
-        cols = row.find_all("td")
-        if len(cols) >= 3:
-            match = {
-                "team1": cols[0].text.strip(),
-                "team2": cols[1].text.strip(),
-                "cotes": cols[2].text.strip(),
-            }
-            matches.append(match)
-
-    log(f"✔️ {len(matches)} matchs trouvés.")
-    return matches
+def send_test_message():
+    send_telegram_message([])
