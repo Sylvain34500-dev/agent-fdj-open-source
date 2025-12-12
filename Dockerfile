@@ -15,14 +15,14 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
+# Copy all project files
 COPY . .
 
-# Environment variable required by Render
+# Render requires this environment variable
 ENV PORT=10000
 
-# Expose the Render port
+# Expose the port used by the server
 EXPOSE 10000
 
-# Start Flask + internal cron loop
+# Start the server (which runs Flask + cron scheduler)
 CMD ["python", "server.py"]
