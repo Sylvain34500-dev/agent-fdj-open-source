@@ -6,36 +6,38 @@ from utils.logger import log
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
+def _masked(token: str) -> str:
+    if not token:
+        return "<NONE>"
+    if len(token) > 8:
+        return token[:6] + "..." + token[-3:]
+    return token
 
 def send_telegram_message(preds):
     """
-    Envoie un message Telegram propre avec les prédictions FDJ.
+    Envoi principal. Ajoute logs de debug pour voir env + réponse.
     """
+    log(f"🔎 send_telegram_message called. TELEGRAM_TOKEN={_masked(TELEGRAM_TOKEN)} CHAT_ID={CHAT_ID}")
+
     if not TELEGRAM_TOKEN or not CHAT_ID:
         log("❌ TELEGRAM_TOKEN ou CHAT_ID manquant dans Render.")
         return
 
-    message = "🎯 *PRONOS FDJ – Dernier Run*\n\n"
-
+    # si preds vide -> envoi message test
     if not preds:
-        message += "⚠️ Aucune prédiction trouvée.\n"
+        message = "🧪 Test message from Agent FDJ — pipeline ran but no predictions to send."
     else:
-        for p in preds:
-            try:
+        message = "🎯 PRONOS FDJ\n\n"
+        try:
+            for p in preds:
                 match = p.get("match", "Match inconnu")
                 prediction = p.get("prediction", "N/A")
                 confidence = p.get("confidence", "N/A")
-
-                message += (
-                    f"🏟️ *{match}*\n"
-                    f"📊 {prediction}\n"
-                    f"💡 Confiance : {confidence}%\n\n"
-                )
-            except Exception as e:
-                message += f"⚠️ Erreur en formatant une prédiction : {e}\n\n"
+                message += f"🏟️ {match}\n📊 {prediction}\n💡 {confidence}%\n\n"
+        except Exception as e:
+            message += f"⚠️ Erreur format prédictions: {e}\n"
 
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-
     payload = {
         "chat_id": CHAT_ID,
         "text": message,
@@ -43,10 +45,13 @@ def send_telegram_message(preds):
     }
 
     try:
-        res = requests.post(url, json=payload)
-        if res.status_code == 200:
-            log("📨 Message Telegram envoyé avec succès !")
-        else:
-            log(f"❌ Erreur Telegram : {res.text}")
+        res = requests.post(url, json=payload, timeout=15)
+        log(f"📡 Telegram HTTP status: {res.status_code}")
+        log(f"📡 Telegram response: {res.text[:800]}")
+        if res.status_code != 200:
+            log("❌ Telegram did not accept the message.")
     except Exception as e:
-        log(f"❌ Exception en envoyant Telegram : {e}")
+        log(f"❌ Exception sending Telegram: {e}")
+
+def send_test_message():
+    send_telegram_message([])
