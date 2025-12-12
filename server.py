@@ -25,6 +25,9 @@ def run_pipeline_capture():
 
 
 def background_run_once():
+    """
+    Lance un run en background au démarrage (non bloquant).
+    """
     def _worker():
         app.logger.info("Background initial run starting...")
         out, err, code = run_pipeline_capture()
@@ -40,24 +43,33 @@ def home():
     return "Agent FDJ running."
 
 
-# 🔥🔥 ROUTE IMPORTANTE POUR TELEGRAM 🔥🔥
+# ROUTE POUR TELEGRAM (webhook)
 @app.route("/webhook", methods=["POST"])
 def telegram_webhook():
-    data = request.get_json()
-
-    print("📩 Webhook Telegram reçu :", data)
+    data = request.get_json(silent=True)
+    app.logger.info(f"POST /webhook received, json present: {bool(data)}")
+    if not data:
+        # Telegram envoie parfois non-json => renvoyer 200 mais loguer
+        return jsonify({"status": "no-json"}), 200
 
     try:
+        # appelle la fonction de handling (dans telegram/handler.py)
         from telegram.handler import handle_update
         handle_update(data)
     except Exception as e:
-        print("❌ Erreur webhook :", e)
+        app.logger.exception("Erreur dans handle_update:")
+        # renvoyer 200 pour éviter que Telegram désactive le webhook,
+        # mais on log l'erreur pour debug
+        return jsonify({"status": "error", "message": str(e)}), 200
 
     return jsonify({"status": "ok"}), 200
 
 
 @app.route("/run", methods=["GET"])
 def manual_run():
+    """
+    Déclenche un run manuel SANS bloquer la requête.
+    """
     def _worker_and_notify():
         out, err, code = run_pipeline_capture()
         app.logger.info(
@@ -65,10 +77,13 @@ def manual_run():
         )
 
     threading.Thread(target=_worker_and_notify, daemon=True).start()
+
     return jsonify({"status": "accepted", "message": "Pipeline started"}), 202
 
 
 if __name__ == "__main__":
+    # un run initial en background (optionnel)
     background_run_once()
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+
