@@ -5,11 +5,9 @@ from predictions.predictor import make_predictions
 from export.exporter import export_results
 from telegram.send import send_telegram_message
 from utils.logger import log
-import threading
-import time
-import os
 
 def main():
+    """Exécute un run complet puis termine."""
     log("🔍 Démarrage d’un run FDJ...")
 
     try:
@@ -43,17 +41,7 @@ def main():
         log(f"❌ ERREUR DANS LE RUN : {e}")
 
 
-def loop_forever():
-    while True:
-        main()
-        log("⏳ Pause 5 minutes...")
-        time.sleep(300)
-
-
 if __name__ == "__main__":
-    # Lancer la boucle continue
-    threading.Thread(target=loop_forever).start()
+    # Si on exécute manuellement main.py localement
+    main()
 
-    # Lancer le serveur Render
-    from server import run_web
-    run_web()
