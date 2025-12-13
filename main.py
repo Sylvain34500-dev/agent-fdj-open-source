@@ -1,30 +1,22 @@
-from utils.logger import log
 from scraping.pronosoft import scrape_pronosoft
-from analysis.analyzer import analyze
-from telegram.send import send_telegram_message
-
+from bot_service.send import send_telegram_message
+from utils.logger import log
 
 def run_pipeline():
-    log("🚀 PIPELINE FDJ DÉMARRÉ")
+    log("🚀 Lancement du pipeline")
 
-    matches = scrape_pronosoft()
-    log(f"📥 Matchs récupérés : {len(matches)}")
+    data = scrape_pronosoft()
 
-    if not matches:
-        log("⚠️ Aucun match récupéré, arrêt du pipeline")
-        send_telegram_message([])
-        return
+    predictions = []
 
-    predictions = analyze(matches)
-
-    if not predictions:
-        log("⚠️ Aucune prédiction générée")
-        send_telegram_message([])
-        return
+    if data:
+        predictions.append({
+            "match": "Pronosoft",
+            "prediction": f"{len(data)} éléments récupérés",
+            "confidence": 100
+        })
 
     send_telegram_message(predictions)
-    log("✅ Pipeline terminé avec succès")
-
 
 if __name__ == "__main__":
     run_pipeline()
