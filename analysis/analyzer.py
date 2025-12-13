@@ -1,13 +1,7 @@
 from utils.logger import log
 
 def analyze(matches):
-    """
-    Analyse très simple :
-    - prend la cote la plus basse
-    - la considère comme le favori
-    """
-
-    log("🧠 Analyse des matchs en cours...")
+    log("🧠 Analyse des matchs")
 
     predictions = []
 
@@ -16,20 +10,20 @@ def analyze(matches):
             match_name = m.get("match")
             cotes = m.get("cotes", {})
 
-            # Nettoyage des cotes
             clean_cotes = {}
             for k, v in cotes.items():
                 try:
-                    clean_cotes[k] = float(v.replace(",", "."))
+                    clean_cotes[k] = float(str(v).replace(",", "."))
                 except:
-                    pass
+                    continue
 
             if not clean_cotes:
                 continue
 
-            # Choix du favori = cote la plus basse
             prediction = min(clean_cotes, key=clean_cotes.get)
-            confidence = int(100 / clean_cotes[prediction])
+            cote = clean_cotes[prediction]
+
+            confidence = min(99, int(100 / cote)) if cote > 1 else 90
 
             predictions.append({
                 "match": match_name,
@@ -38,7 +32,7 @@ def analyze(matches):
             })
 
         except Exception as e:
-            log(f"❌ Erreur analyse match : {e}")
+            log(f"❌ Erreur analyse : {e}")
 
     log(f"✅ {len(predictions)} pronostics générés")
     return predictions
