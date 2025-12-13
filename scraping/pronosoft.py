@@ -3,45 +3,21 @@
 Pronosoft scraper — VERSION NORMALISÉE (Phase 2.1)
 
 Objectif :
-- Aucun élément codé en dur (équipes, compétitions fixes)
 - Format standard commun à TOUS les scrapers
-- Robuste même si Pronosoft change légèrement
-- Compatible pipeline existant (main.py inchangé)
+- Aucun élément codé en dur critique
+- Compatible pipeline existant
 """
 
 from utils.logger import log
-import json
-
-# ------------------------------------------------------------------
-# FORMAT NORMALISÉ UNIQUE (CONTRAT PROJET)
-# ------------------------------------------------------------------
-# {
-#   "source": "pronosoft",
-#   "sport": "football",
-#   "competition": "Ligue 1",
-#   "match": {
-#       "team1": "PSG",
-#       "team2": "Marseille",
-#       "date": "2025-12-13",
-#       "time": "21:00"
-#   },
-#   "data": {...}
-# }
-# ------------------------------------------------------------------
 
 
 def scrape_pronosoft():
-    """
-    Scraper Pronosoft normalisé.
-    Pour l'instant : structure réelle + données simulées propres.
-    Le scraping HTML/API réel sera branché PLUS TARD.
-    """
-
     log("[PRONOSOFT] Scraping démarré (format normalisé)")
 
     results = []
 
     try:
+        # Données simulées temporaires
         fake_events = [
             {
                 "sport": "football",
@@ -64,20 +40,18 @@ def scrape_pronosoft():
         ]
 
         for event in fake_events:
-            normalized = {
+            results.append({
                 "source": "pronosoft",
-                "sport": event.get("sport"),
-                "competition": event.get("competition"),
+                "sport": event["sport"],
+                "competition": event["competition"],
                 "match": {
-                    "team1": event.get("team1"),
-                    "team2": event.get("team2"),
-                    "date": event.get("date"),
-                    "time": event.get("time"),
+                    "team1": event["team1"],
+                    "team2": event["team2"],
+                    "date": event["date"],
+                    "time": event["time"]
                 },
                 "data": event.get("extra", {})
-            }
-
-            results.append(normalized)
+            })
 
         log(f"[PRONOSOFT] {len(results)} événements normalisés")
         return results
@@ -85,19 +59,3 @@ def scrape_pronosoft():
     except Exception as e:
         log(f"[PRONOSOFT] Erreur scraper : {e}")
         return []
-
-
-# ------------------------------------------------------------------
-# 🧪 TEST ISOLÉ (PHASE B1)
-# ------------------------------------------------------------------
-if __name__ == "__main__":
-    log("🧪 TEST ISOLÉ PRONOSOFT")
-
-    data = scrape_pronosoft()
-
-    log(f"📊 Nombre d'événements détectés : {len(data)}")
-
-    if data:
-        print(json.dumps(data, indent=2, ensure_ascii=False))
-    else:
-        log("⚠️ Aucun événement retourné")
