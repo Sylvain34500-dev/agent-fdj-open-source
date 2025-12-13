@@ -1,70 +1,29 @@
-# main.py — Render compatible (serveur + pipeline)
-
+import os
 import threading
-import time
-
-from flask import Flask, jsonify
-
-from scraping.pronosoft import scrape_pronosoft
-from scraping.flashscore import scrape_flashscore
-from predictions.normalizer import normalize
-from bot_service.send import send_telegram_message
+from flask import Flask, request
 from utils.logger import log
-
 
 app = Flask(__name__)
 
+@app.route("/", methods=["GET"])
+def health():
+    return "OK", 200
 
-# =========================
-# PIPELINE
-# =========================
-
-def run_pipeline():
+@app.route("/run", methods=["GET"])
+def run():
     log("🚀 Lancement du pipeline")
+    from pipeline.run_pipeline import run_pipeline
+    threading.Thread(target=run_pipeline, daemon=True).start()
+    return "Pipeline lancé", 202
 
-    pronosoft_data = scrape_pronosoft()
-    flashscore_data = scrape_flashscore()
-
-    normalized_matches = normalize(
-        pronosoft_data,
-        flashscore_data
-    )
-
-    predictions = []
-
-    if not normalized_matches:
-        send_telegram_message([])
-        return
-
-    for match in normalized_matches:
-        predictions.append({
-            "match": f"{match['match']['team1']} vs {match['match']['team2']}",
-            "prediction": "Match détecté",
-            "confidence": 100
-        })
-
-    send_telegram_message(predictions)
-
-
-# =========================
-# ROUTES HTTP
-# =========================
-
-@app.route("/", methods=["GET", "HEAD"])
-def healthcheck():
-    return "", 200
-
-
-@app.route("/run", methods=["GET", "HEAD"])
-def run_endpoint():
-    threading.Thread(target=run_pipeline).start()
-    return jsonify({"status": "pipeline launched"}), 200
-
-
-# =========================
-# START
-# =========================
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    from bot.telegram_bot import handle_update
+    update = request.get_json()
+    handle_update(update)
+    return "OK", 200
 
 if __name__ == "__main__":
-    log("🌍 Serveur Flask prêt")
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
