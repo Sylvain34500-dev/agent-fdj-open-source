@@ -5,19 +5,15 @@ from utils.logger import log
 
 def scrape_flashscore():
     """
-    Flashscore scraper — VERSION NORMALISÉE (Phase 2.2)
-
-    - Même format que Pronosoft
-    - Données simulées propres
-    - Aucun matching / logique métier ici
+    Flashscore scraper — VERSION NORMALISÉE
+    Données simulées propres
     """
 
-    log("[FLASHSCORE] Scraping démarré (format normalisé)")
+    log("[FLASHSCORE] Scraping démarré")
 
     results = []
 
     try:
-        # Données simulées temporaires
         fake_events = [
             {
                 "sport": "football",
@@ -26,49 +22,22 @@ def scrape_flashscore():
                 "team2": "Marseille",
                 "date": "2025-12-13",
                 "time": "21:00",
-                "extra": {
-                    "status": "scheduled"
-                }
+                "confidence": 100
             }
         ]
 
         for event in fake_events:
             results.append({
-                "source": "flashscore",
-                "sport": event["sport"],
-                "competition": event["competition"],
-                "match": {
-                    "team1": event["team1"],
-                    "team2": event["team2"],
-                    "date": event["date"],
-                    "time": event["time"]
-                },
-                "data": event.get("extra", {})
+                "match": f"{event['team1']} vs {event['team2']}",
+                "prediction": f"{event['team1']} gagne",
+                "confidence": event["confidence"],
+                "source": "flashscore"
             })
 
-        log(f"[FLASHSCORE] {len(results)} événements normalisés")
+        log(f"[FLASHSCORE] {len(results)} événement(s) collecté(s)")
         return results
 
     except Exception as e:
         log(f"[FLASHSCORE] Erreur scraper : {e}")
         return []
-
-
-    events.append({
-        "source": "pronosoft",
-        "sport": "football",
-        "competition": "Premier League",
-        "match": {
-            "team1": "Équipe C",
-            "team2": "Équipe D",
-            "date": "2025-12-14",
-            "time": "18:30"
-        },
-        "data": {
-            "confidence": 64
-        }
-    })
-
-    log(f"📊 Pronosoft | {len(events)} événement(s) collecté(s)")
-    return events
 
