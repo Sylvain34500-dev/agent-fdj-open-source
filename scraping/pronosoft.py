@@ -9,8 +9,8 @@ Objectif :
 - Compatible pipeline existant (main.py inchangé)
 """
 
-from datetime import datetime
 from utils.logger import log
+import json
 
 # ------------------------------------------------------------------
 # FORMAT NORMALISÉ UNIQUE (CONTRAT PROJET)
@@ -42,11 +42,6 @@ def scrape_pronosoft():
     results = []
 
     try:
-        # ----------------------------------------------------------
-        # ⚠️ PLACEHOLDER TEMPORAIRE
-        # Ici on simulera plusieurs matchs génériques
-        # ----------------------------------------------------------
-
         fake_events = [
             {
                 "sport": "football",
@@ -67,10 +62,6 @@ def scrape_pronosoft():
                 "extra": {"confidence": 64}
             }
         ]
-
-        # ----------------------------------------------------------
-        # NORMALISATION
-        # ----------------------------------------------------------
 
         for event in fake_events:
             normalized = {
@@ -95,3 +86,18 @@ def scrape_pronosoft():
         log(f"[PRONOSOFT] Erreur scraper : {e}")
         return []
 
+
+# ------------------------------------------------------------------
+# 🧪 TEST ISOLÉ (PHASE B1)
+# ------------------------------------------------------------------
+if __name__ == "__main__":
+    log("🧪 TEST ISOLÉ PRONOSOFT")
+
+    data = scrape_pronosoft()
+
+    log(f"📊 Nombre d'événements détectés : {len(data)}")
+
+    if data:
+        print(json.dumps(data, indent=2, ensure_ascii=False))
+    else:
+        log("⚠️ Aucun événement retourné")
