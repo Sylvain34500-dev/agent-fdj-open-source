@@ -1,41 +1,45 @@
-# bot_service/handler.py
 import os
+import requests
 from utils.logger import log
-from analysis.analyzer import analyze
-from scraping.pronosoft import scrape_pronosoft
-from bot_service.send import send_telegram_message
+from main import run
+
+TOKEN = os.getenv("TELEGRAM_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
+
+
+def send_message(text: str, chat_id: str = None):
+    if not chat_id:
+        chat_id = CHAT_ID
+
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+    try:
+        requests.post(url, json={"chat_id": chat_id, "text": text}, timeout=10)
+    except Exception as e:
+        log(f"[send_message] Erreur: {e}")
+
 
 def handle_update(update: dict):
     try:
-        if not isinstance(update, dict):
-            return "ok"
-
         message = update.get("message", {})
         if not message:
             return "ok"
 
-        chat_id = message.get("chat", {}).get("id")
+        chat_id = message["chat"]["id"]
         text = message.get("text", "").strip().lower()
 
-        log(f"[Telegram] {text} from {chat_id}")
+        log(f"[Webhook] {text}")
 
-        if text in ("/start", "start"):
-            send_telegram_message([{
-                "match": "Bot prêt",
-                "prediction": "Envoie /run",
-                "confidence": 100
-            }])
+        if text == "/start":
+            send_message("🤖 Bot opérationnel. Envoie /run", chat_id)
 
         elif text in ("/run", "/fdj"):
-            log("[BOT] Lancement pipeline")
+            send_message("⏳ Lancement du pipeline FDJ...", chat_id)
 
-            matches = scrape_pronosoft()
-            preds = analyze(matches)
-
-            send_telegram_message(preds)
+            run()  # 🔥 SYNCHRONE
 
         return "ok"
 
     except Exception as e:
-        log(f"[handle_update] Erreur: {e}")
+        log(f"[handler] Erreur: {e}")
         return "ok"
+
