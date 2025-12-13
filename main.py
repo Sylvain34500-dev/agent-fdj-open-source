@@ -1,29 +1,42 @@
-import os
-import threading
-from flask import Flask, request
+# main.py
+
+from scraping.pronosoft import scrape_pronosoft
+from scraping.flashscore import scrape_flashscore
+from predictions.normalizer import normalize
+from bot_service.send import send_telegram_message
 from utils.logger import log
 
-app = Flask(__name__)
 
-@app.route("/", methods=["GET"])
-def health():
-    return "OK", 200
-
-@app.route("/run", methods=["GET"])
-def run():
+def run_pipeline():
     log("🚀 Lancement du pipeline")
-    from pipeline.run_pipeline import run_pipeline
-    threading.Thread(target=run_pipeline, daemon=True).start()
-    return "Pipeline lancé", 202
 
-@app.route("/webhook", methods=["POST"])
-def webhook():
-    from bot.telegram_bot import handle_update
-    update = request.get_json()
-    handle_update(update)
-    return "OK", 200
+    pronosoft_data = scrape_pronosoft()
+    flashscore_data = scrape_flashscore()
+
+    normalized_matches = normalize(
+        pronosoft_data,
+        flashscore_data
+    )
+
+    if not normalized_matches:
+        send_telegram_message("❌ Aucun match détecté aujourd’hui.")
+        log("❌ Aucun match détecté")
+        return
+
+    messages = []
+
+    for match in normalized_matches:
+        messages.append(
+            f"⚽ {match['match']['team1']} vs {match['match']['team2']}\n"
+            f"📅 {match['match']['date']} {match['match']['time']}\n"
+            f"🔥 Source : {match['source']}"
+        )
+
+    for msg in messages:
+        send_telegram_message(msg)
+
+    log("✅ Pipeline terminé")
+
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
-
+    run_pipeline()
