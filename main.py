@@ -18,25 +18,24 @@ def run_pipeline():
         flashscore_data
     )
 
+    predictions = []
+
     if not normalized_matches:
-        send_telegram_message("❌ Aucun match détecté aujourd’hui.")
-        log("❌ Aucun match détecté")
+        send_telegram_message([])
+        log("⚠️ Aucun match détecté")
         return
 
-    messages = []
-
     for match in normalized_matches:
-        messages.append(
-            f"⚽ {match['match']['team1']} vs {match['match']['team2']}\n"
-            f"📅 {match['match']['date']} {match['match']['time']}\n"
-            f"🔥 Source : {match['source']}"
-        )
+        predictions.append({
+            "match": f"{match['match']['team1']} vs {match['match']['team2']}",
+            "prediction": "Match détecté",
+            "confidence": match.get("data", {}).get("confidence", 100)
+        })
 
-    for msg in messages:
-        send_telegram_message(msg)
-
+    send_telegram_message(predictions)
     log("✅ Pipeline terminé")
 
 
 if __name__ == "__main__":
     run_pipeline()
+
