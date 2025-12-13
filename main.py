@@ -1,24 +1,42 @@
-# main.py — TEST Phase 2.1 Pronosoft normalisé
+# main.py — TEST Phase 2.1 Pronosoft NORMALISÉ
 
 from scraping.pronosoft import scrape_pronosoft
+from bot_service.send import send_telegram_message
 from utils.logger import log
+import json
 
 def run_pipeline():
     log("🧪 TEST Phase 2.1 — Pronosoft normalisé")
 
-    data = scrape_pronosoft()
+    events = scrape_pronosoft()
 
-    if not data:
-        log("❌ Aucun événement retourné par Pronosoft")
+    if not events:
+        send_telegram_message([{
+            "match": "TEST",
+            "prediction": "❌ Aucun événement retourné",
+            "confidence": 0
+        }])
         return
 
-    log(f"✅ Nombre d'événements normalisés : {len(data)}")
+    # On prend 1 événement pour vérifier la structure
+    sample = events[0]
 
-    # Affiche un exemple pour validation structure
-    first = data[0]
+    message = (
+        "🧪 TEST Phase 2.1 — STRUCTURE\n\n"
+        f"Source: {sample.get('source')}\n"
+        f"Sport: {sample.get('sport')}\n"
+        f"Compétition: {sample.get('competition')}\n"
+        f"Match: {sample.get('match', {}).get('team1')} vs {sample.get('match', {}).get('team2')}\n"
+        f"Date: {sample.get('match', {}).get('date')}\n"
+        f"Heure: {sample.get('match', {}).get('time')}\n\n"
+        f"Total événements: {len(events)}"
+    )
 
-    log("📌 Exemple d'événement :")
-    log(first)
+    send_telegram_message([{
+        "match": "TEST Pronosoft",
+        "prediction": message,
+        "confidence": 100
+    }])
 
 if __name__ == "__main__":
     run_pipeline()
