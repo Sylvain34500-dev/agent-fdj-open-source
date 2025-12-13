@@ -4,42 +4,26 @@ from utils.logger import log
 
 def scrape_pronosoft():
     """
-    Scraper Pronosoft – Phase 2.1 (version brute)
-    Données simulées pour valider le pipeline.
+    Scraper Pronosoft – Version initiale simple (pré-normalisation)
     """
 
-    log("📊 Pronosoft | Scraping démarré (mode brut)")
+    log("📊 Pronosoft | Scraping démarré (mode simple)")
 
     events = []
 
-    # 🔴 TEMPORAIRE : données simulées
+    # 🔴 Données simulées temporaires
     events.append({
         "source": "pronosoft",
         "sport": "football",
         "competition": "Ligue 1",
         "match": {
-            "team1": "Équipe A",
-            "team2": "Équipe B",
+            "team1": "PSG",
+            "team2": "Marseille",
             "date": "2025-12-13",
             "time": "21:00"
         },
         "data": {
             "confidence": 78
-        }
-    })
-
-    events.append({
-        "source": "pronosoft",
-        "sport": "football",
-        "competition": "Premier League",
-        "match": {
-            "team1": "Équipe C",
-            "team2": "Équipe D",
-            "date": "2025-12-14",
-            "time": "18:30"
-        },
-        "data": {
-            "confidence": 64
         }
     })
 
