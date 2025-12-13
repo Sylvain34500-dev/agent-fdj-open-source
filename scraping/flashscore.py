@@ -2,31 +2,53 @@
 
 from utils.logger import log
 
+
 def scrape_flashscore():
     """
-    Scraper Flashscore – Phase 2.2
-    Version brute, sans matching, sans dépendances externes.
+    Flashscore scraper — VERSION NORMALISÉE (Phase 2.2)
+
+    - Même format que Pronosoft
+    - Données simulées propres
+    - Aucun matching / logique métier ici
     """
-    log("⚽ Flashscore | Scraping démarré (mode brut)")
 
-    events = []
+    log("[FLASHSCORE] Scraping démarré (format normalisé)")
 
-    # 🔴 TEMPORAIRE : données simulées pour valider le pipeline
-    # (on branchera le vrai scraping juste après)
-    events.append({
-        "source": "flashscore",
-        "sport": "football",
-        "competition": "Ligue 1",
-        "match": {
-            "team1": "PSG",
-            "team2": "Marseille",
-            "date": "2025-12-13",
-            "time": "21:00"
-        },
-        "data": {
-            "status": "scheduled"
-        }
-    })
+    results = []
 
-    log(f"⚽ Flashscore | {len(events)} événement(s) collecté(s)")
-    return events
+    try:
+        # Données simulées temporaires
+        fake_events = [
+            {
+                "sport": "football",
+                "competition": "Ligue 1",
+                "team1": "PSG",
+                "team2": "Marseille",
+                "date": "2025-12-13",
+                "time": "21:00",
+                "extra": {
+                    "status": "scheduled"
+                }
+            }
+        ]
+
+        for event in fake_events:
+            results.append({
+                "source": "flashscore",
+                "sport": event["sport"],
+                "competition": event["competition"],
+                "match": {
+                    "team1": event["team1"],
+                    "team2": event["team2"],
+                    "date": event["date"],
+                    "time": event["time"]
+                },
+                "data": event.get("extra", {})
+            })
+
+        log(f"[FLASHSCORE] {len(results)} événements normalisés")
+        return results
+
+    except Exception as e:
+        log(f"[FLASHSCORE] Erreur scraper : {e}")
+        return []
