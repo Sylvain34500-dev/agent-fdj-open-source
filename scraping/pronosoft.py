@@ -4,14 +4,14 @@ from utils.logger import log
 
 def scrape_pronosoft():
     """
-    Scraper Pronosoft – Version initiale simple (pré-normalisation)
+    Scraper Pronosoft – VERSION INITIALE (Phase 2.0)
+    Données simulées pour validation du pipeline.
     """
-
-    log("📊 Pronosoft | Scraping démarré (mode simple)")
+    log("📊 Pronosoft | Scraping démarré (version initiale)")
 
     events = []
 
-    # 🔴 Données simulées temporaires
+    # 🔴 DONNÉES SIMULÉES
     events.append({
         "source": "pronosoft",
         "sport": "football",
@@ -23,7 +23,7 @@ def scrape_pronosoft():
             "time": "21:00"
         },
         "data": {
-            "confidence": 78
+            "confidence": 100
         }
     })
 
